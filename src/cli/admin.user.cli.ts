@@ -1,4 +1,4 @@
-import * as prompts from "prompts"
+import prompts from "prompts"
 import { userService } from "../domain/user/user.service"
 import { createUserSchema } from "../domain/user/user.schema"
 
