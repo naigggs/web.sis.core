@@ -157,6 +157,33 @@ export class StudentController {
       return c.json(response, resolveStatusCode(error))
     }
   }
+
+  async handleGetEligibleSubjects(c: Context) {
+    try {
+      const { id } = c.req.param()
+      const subjects = await studentService.getEligibleSubjects(id)
+
+      const response = createResponse(
+        true,
+        "Eligible subjects retrieved successfully.",
+        { subjects },
+        [],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response)
+    } catch (error: any) {
+      const response = createResponse(
+        false,
+        "Failed to retrieve eligible subjects.",
+        null,
+        [error.message],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, resolveStatusCode(error))
+    }
+  }
 }
 
 export const studentController = new StudentController()

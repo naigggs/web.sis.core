@@ -1,4 +1,7 @@
 import { studentRepository } from "./student.repository"
+import { subjectRepository } from "../subject/subject.repository"
+import { gradeRepository } from "../grade/grade.repository"
+import { reservationRepository } from "../reservation/reservation.repository"
 import type {
   CreateStudentDTO,
   UpdateStudentDTO,
@@ -64,6 +67,38 @@ export class StudentService {
     }
 
     return await studentRepository.deleteById(id)
+  }
+
+  async getEligibleSubjects(studentId: string) {
+    const student = await studentRepository.getById(studentId)
+    if (!student) throw new Error("Student not found")
+
+    const [subjects, studentGrades, reservations] = await Promise.all([
+      subjectRepository.getByCourseWithPrerequisites(student.courseId),
+      gradeRepository.getAllByStudent(studentId),
+      reservationRepository.getByStudent(studentId),
+    ])
+
+    const gradeMap = new Map(
+      studentGrades
+        .filter((g) => g.finalGrade !== null)
+        .map((g) => [g.subjectId, g]),
+    )
+    const reservedSubjectIds = new Set(reservations.map((r) => r.subjectId))
+
+    return subjects.map((subj) => {
+      const missingPrerequisites = subj.prerequisites
+        .filter((p) => !gradeMap.has(p.prerequisiteSubjectId))
+        .map((p) => p.prerequisiteSubject)
+
+      return {
+        ...subj,
+        prerequisites: undefined,
+        eligible: missingPrerequisites.length === 0,
+        alreadyReserved: reservedSubjectIds.has(subj.id),
+        missingPrerequisites,
+      }
+    })
   }
 }
 
