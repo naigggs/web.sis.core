@@ -1,0 +1,30 @@
+{
+    "editor.tabSize": 4,
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": true,
+    "prettier.semi": false,
+    "typescript.format.semicolons": "remove",
+    "javascript.format.semicolons": "remove",
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "files.autoSave": "onWindowChange",
+    "files.exclude": {
+        "**/node_modules": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.git": true,
+        "**/dist": true
+    }
+}

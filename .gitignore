@@ -1,0 +1,44 @@
+# Custom
+.json/
+
+# Dependencies
+node_modules/
+
+# Production
+dist/
+out/
+build/
+coverage/
+
+# Environment configurations
+.env
+.env.prod
+.env.dev
+.env.staging
+ 
+# Allow example env
+!.env.example
+
+# OS Custom
+.DS_Store
+Thumbs.db
+._*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDEs
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# Agents
+.agents
+.github
+
+
