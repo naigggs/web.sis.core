@@ -46,7 +46,13 @@ export class GradeRepository {
     })
   }
 
-  async upsert(data: CreateGradeDTO & { encodedByUserId: string }) {
+  async upsert(
+    data: CreateGradeDTO & {
+      encodedByUserId: string
+      finalGrade?: number
+      remarks?: string
+    },
+  ) {
     const { studentId, subjectId, courseId, encodedByUserId, ...values } = data
 
     const numericValues = {
@@ -78,7 +84,11 @@ export class GradeRepository {
 
   async updateById(
     id: string,
-    data: UpdateGradeDTO & { encodedByUserId: string },
+    data: UpdateGradeDTO & {
+      encodedByUserId: string
+      finalGrade?: number
+      remarks?: string
+    },
   ) {
     const { encodedByUserId, ...values } = data
 

@@ -9,16 +9,12 @@ export const createGradeSchema = z.object({
   prelim: gradeValue,
   midterm: gradeValue,
   finals: gradeValue,
-  finalGrade: gradeValue,
-  remarks: z.string().optional(),
 })
 
 export const updateGradeSchema = z.object({
   prelim: gradeValue,
   midterm: gradeValue,
   finals: gradeValue,
-  finalGrade: gradeValue,
-  remarks: z.string().optional(),
 })
 
 export const listGradeSchema = z.object({
