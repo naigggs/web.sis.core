@@ -18,13 +18,22 @@ export class ReservationService {
     if (!student) throw new Error("Student not found")
     if (!subject) throw new Error("Subject not found")
 
+    // Validation 1: subject must belong to the student's enrolled course
+    if (subject.courseId !== student.courseId) {
+      throw new Error(
+        "Subject does not belong to the student's enrolled course",
+      )
+    }
+
     const alreadyReserved = await reservationRepository.getByStudentAndSubject(
       studentId,
       subjectId,
     )
     if (alreadyReserved) throw new Error("Subject already reserved")
 
-    // Check prerequisites
+    // Validation 2: prerequisite enforcement
+    // A prerequisite is satisfied when the student has a grade row for it where
+    // finalGrade >= 75 OR remarks = 'PASSED' (case-insensitive).
     const prerequisites =
       await reservationRepository.getPrerequisites(subjectId)
 
@@ -32,20 +41,23 @@ export class ReservationService {
       const missingPrereqs: string[] = []
 
       for (const prereq of prerequisites) {
-        const passingGrade = await reservationRepository.getPassingGrade(
+        const gradeRow = await reservationRepository.getPassingGrade(
           studentId,
           prereq.prerequisiteSubjectId,
         )
 
-        if (!passingGrade || passingGrade.finalGrade === null) {
-          missingPrereqs.push(prereq.prerequisiteSubjectId)
+        const passed =
+          gradeRow &&
+          (Number(gradeRow.finalGrade) >= 75 ||
+            gradeRow.remarks?.toLowerCase() === "passed")
+
+        if (!passed) {
+          missingPrereqs.push(prereq.prerequisiteSubject.code)
         }
       }
 
       if (missingPrereqs.length > 0) {
-        throw new Error(
-          `Prerequisites not satisfied. Missing grades for subject IDs: ${missingPrereqs.join(", ")}`,
-        )
+        throw new Error(`Missing prerequisites: [${missingPrereqs.join(", ")}]`)
       }
     }
 

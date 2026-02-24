@@ -32,6 +32,7 @@ export class ReservationRepository {
   async getPrerequisites(subjectId: string) {
     return await db.query.subjectPrerequisite.findMany({
       where: eq(subjectPrerequisite.subjectId, subjectId),
+      with: { prerequisiteSubject: true },
     })
   }
 
