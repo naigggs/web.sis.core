@@ -10,7 +10,8 @@
     "db:reset": "bun run src/scripts/reset-db.ts",
     "cli:create-admin": "bun run src/cli/admin.user.cli.ts",
     "cli:generate-jwt-secrets": "bun run src/cli/generate.jwt.secrets.cli.ts",
-    "db:seed:students": "bun run src/db/seeds/students.seed.ts"
+    "db:seed:students": "bun run src/db/seeds/students.seed.ts",
+    "db:seed": "bun run src/db/seeds/seed.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",
