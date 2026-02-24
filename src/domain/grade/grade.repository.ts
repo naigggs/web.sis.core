@@ -103,6 +103,7 @@ export class GradeRepository {
   async getAllByStudent(studentId: string) {
     return await db.query.grade.findMany({
       where: eq(grade.studentId, studentId),
+      with: { subject: true, course: true },
     })
   }
 }

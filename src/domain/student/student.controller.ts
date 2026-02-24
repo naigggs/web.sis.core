@@ -50,7 +50,7 @@ export class StudentController {
   async handleGetById(c: Context) {
     try {
       const { id } = c.req.param()
-      const student = await studentService.getById(id)
+      const student = await studentService.getDetailedById(id)
 
       const response = createResponse(
         true,

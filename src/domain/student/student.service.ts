@@ -69,6 +69,47 @@ export class StudentService {
     return await studentRepository.deleteById(id)
   }
 
+  async getDetailedById(id: string) {
+    const studentRecord = await studentRepository.getById(id)
+    if (!studentRecord) throw new Error("Student not found")
+
+    const [subjects, studentGrades, reservations] = await Promise.all([
+      subjectRepository.getByCourseWithPrerequisites(studentRecord.courseId),
+      gradeRepository.getAllByStudent(id),
+      reservationRepository.getByStudent(id),
+    ])
+
+    const gradeMap = new Map(
+      studentGrades
+        .filter((g) => g.finalGrade !== null)
+        .map((g) => [g.subjectId, g]),
+    )
+    const reservedSubjectIds = new Set(reservations.map((r) => r.subjectId))
+
+    const subjectStatus = subjects.map((subj) => {
+      const missingPrerequisites = subj.prerequisites
+        .filter((p) => !gradeMap.has(p.prerequisiteSubjectId))
+        .map((p) => p.prerequisiteSubject)
+
+      return {
+        id: subj.id,
+        code: subj.code,
+        title: subj.title,
+        units: subj.units,
+        eligible: missingPrerequisites.length === 0,
+        alreadyReserved: reservedSubjectIds.has(subj.id),
+        missingPrerequisites,
+      }
+    })
+
+    return {
+      ...studentRecord,
+      grades: studentGrades,
+      reservations,
+      subjectStatus,
+    }
+  }
+
   async getEligibleSubjects(studentId: string) {
     const student = await studentRepository.getById(studentId)
     if (!student) throw new Error("Student not found")
