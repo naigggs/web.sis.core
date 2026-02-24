@@ -1,3 +1,6 @@
+export * from "../enums/user"
+export * from "../enums/course"
+
 export * from "./user"
 export * from "./course"
 export * from "./student"

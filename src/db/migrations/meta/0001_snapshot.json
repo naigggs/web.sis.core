@@ -1,6 +1,6 @@
 {
-  "id": "379fd0bc-0365-4c19-9f4c-b4e9d00c43d5",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "93eacf9b-93f2-4b2b-9579-5f5d8eb25e74",
+  "prevId": "379fd0bc-0365-4c19-9f4c-b4e9d00c43d5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -309,7 +309,24 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "subjects_course_id_code_unique": {
+          "name": "subjects_course_id_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "course_id",
+            "code"
+          ]
+        },
+        "subjects_course_id_title_unique": {
+          "name": "subjects_course_id_title_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "course_id",
+            "title"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -449,7 +466,17 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "grades_student_id_subject_id_course_id_unique": {
+          "name": "grades_student_id_subject_id_course_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "student_id",
+            "subject_id",
+            "course_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -522,7 +549,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "subject_reservations_student_id_subject_id_unique": {
+          "name": "subject_reservations_student_id_subject_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "student_id",
+            "subject_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -587,7 +623,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "subject_prerequisites_subject_id_prerequisite_subject_id_unique": {
+          "name": "subject_prerequisites_subject_id_prerequisite_subject_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "subject_id",
+            "prerequisite_subject_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

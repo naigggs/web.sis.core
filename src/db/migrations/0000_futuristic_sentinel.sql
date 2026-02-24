@@ -1,3 +1,5 @@
+CREATE TYPE "public"."user_role" AS ENUM('student', 'staff', 'admin');--> statement-breakpoint
+CREATE TYPE "public"."subject_reservation_status" AS ENUM('reserved', 'cancelled');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" text PRIMARY KEY NOT NULL,
 	"email" text,
