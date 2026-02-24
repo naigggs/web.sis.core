@@ -91,6 +91,33 @@ export class SubjectService {
     return await subjectRepository.getPrerequisites(subjectId)
   }
 
+  /**
+   * BFS from `startId` through existing prerequisite links.
+   * Returns true if `targetId` is reachable — meaning adding
+   * targetId → startId would create a cycle.
+   */
+  private async hasCircularDependency(
+    startId: string,
+    targetId: string,
+  ): Promise<boolean> {
+    const visited = new Set<string>()
+    const queue: string[] = [startId]
+
+    while (queue.length > 0) {
+      const current = queue.shift()!
+      if (current === targetId) return true
+      if (visited.has(current)) continue
+      visited.add(current)
+
+      const prereqIds = await subjectRepository.getPrerequisiteIds(current)
+      for (const id of prereqIds) {
+        if (!visited.has(id)) queue.push(id)
+      }
+    }
+
+    return false
+  }
+
   async addPrerequisite(subjectId: string, prerequisiteSubjectId: string) {
     if (subjectId === prerequisiteSubjectId) {
       throw new Error("A subject cannot be its own prerequisite")
@@ -103,6 +130,22 @@ export class SubjectService {
 
     if (!subjectExists) throw new Error("Subject not found")
     if (!prereqExists) throw new Error("Prerequisite subject not found")
+
+    if (subjectExists.courseId !== prereqExists.courseId) {
+      throw new Error("Prerequisite must belong to the same course")
+    }
+
+    // Circular dependency check: would adding prerequisiteSubjectId as a prereq
+    // of subjectId create a cycle (e.g. A→B→A)?
+    const isCyclic = await this.hasCircularDependency(
+      prerequisiteSubjectId,
+      subjectId,
+    )
+    if (isCyclic) {
+      throw new Error(
+        "Adding this prerequisite would create a circular dependency",
+      )
+    }
 
     const alreadyLinked = await subjectRepository.getPrerequisiteLink(
       subjectId,

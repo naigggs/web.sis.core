@@ -97,6 +97,13 @@ export class SubjectRepository {
     })
   }
 
+  async getPrerequisiteIds(subjectId: string): Promise<string[]> {
+    const rows = await db.query.subjectPrerequisite.findMany({
+      where: eq(subjectPrerequisite.subjectId, subjectId),
+    })
+    return rows.map((r) => r.prerequisiteSubjectId)
+  }
+
   async addPrerequisite(subjectId: string, prerequisiteSubjectId: string) {
     const [newPrerequisite] = await db
       .insert(subjectPrerequisite)
