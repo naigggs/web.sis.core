@@ -38,15 +38,4 @@ const envSchema = z.object({
     .transform((str) => str.toLowerCase() === "true" || str === "1"),
 })
 
-const parsedEnv = envSchema.parse(process.env)
-
-const THIRTY_DAYS_SECONDS = 60 * 60 * 24 * 30
-
-export const env =
-  parsedEnv.ENVIRONMENT === "development"
-    ? {
-        ...parsedEnv,
-        JWT_ACCESS_TOKEN_LIFETIME: THIRTY_DAYS_SECONDS,
-        JWT_REFRESH_TOKEN_LIFETIME: THIRTY_DAYS_SECONDS,
-      }
-    : parsedEnv
+export const env = envSchema.parse(process.env)
