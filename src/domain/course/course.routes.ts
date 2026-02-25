@@ -17,6 +17,6 @@ courseRoutes.post("/", checkRole(["admin"]), (c) =>
 courseRoutes.patch("/:id", checkRole(["admin"]), (c) =>
   courseController.handleUpdateById(c),
 )
-courseRoutes.delete("/:id", checkRole(["admin"]), (c) =>
-  courseController.handleDeleteById(c),
+courseRoutes.delete("/", checkRole(["admin"]), (c) =>
+  courseController.handleDeleteMany(c),
 )

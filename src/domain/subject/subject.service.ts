@@ -75,12 +75,11 @@ export class SubjectService {
     return await subjectRepository.updateById(id, data)
   }
 
-  async deleteById(id: string) {
-    const existing = await subjectRepository.getById(id)
-    if (!existing) {
-      throw new Error("Subject not found")
+  async deleteManyByIds(ids: string[]) {
+    if (ids.length === 0) {
+      throw new Error("No IDs provided")
     }
-    return await subjectRepository.deleteById(id)
+    return await subjectRepository.deleteManyByIds(ids)
   }
 
   async getPrerequisites(subjectId: string) {

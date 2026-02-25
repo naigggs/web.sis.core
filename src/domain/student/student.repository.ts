@@ -1,4 +1,4 @@
-import { eq, ilike, or, and, SQL } from "drizzle-orm"
+import { eq, ilike, or, and, inArray, SQL } from "drizzle-orm"
 
 import { db } from "../../config/database"
 import { student } from "../../db/schema/student"
@@ -78,8 +78,8 @@ export class StudentRepository {
     return updated
   }
 
-  async deleteById(id: string) {
-    return await db.delete(student).where(eq(student.id, id)).returning()
+  async deleteManyByIds(ids: string[]) {
+    return await db.delete(student).where(inArray(student.id, ids)).returning()
   }
 }
 

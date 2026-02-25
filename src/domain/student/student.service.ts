@@ -60,13 +60,11 @@ export class StudentService {
     return await studentRepository.updateById(id, data)
   }
 
-  async deleteById(id: string) {
-    const existing = await studentRepository.getById(id)
-    if (!existing) {
-      throw new Error("Student not found")
+  async deleteManyByIds(ids: string[]) {
+    if (ids.length === 0) {
+      throw new Error("No IDs provided")
     }
-
-    return await studentRepository.deleteById(id)
+    return await studentRepository.deleteManyByIds(ids)
   }
 
   async getDetailedById(id: string) {

@@ -21,8 +21,8 @@ studentRoutes.get("/:id", checkRole(["admin", "staff"]), (c) =>
 studentRoutes.patch("/:id", checkRole(["admin", "staff"]), (c) =>
   studentController.handleUpdateById(c),
 )
-studentRoutes.delete("/:id", checkRole(["admin"]), (c) =>
-  studentController.handleDeleteById(c),
+studentRoutes.delete("/", checkRole(["admin"]), (c) =>
+  studentController.handleDeleteMany(c),
 )
 
 // Reservations

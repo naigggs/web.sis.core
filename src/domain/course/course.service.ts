@@ -42,12 +42,11 @@ export class CourseService {
     return await courseRepository.updateById(id, data)
   }
 
-  async deleteById(id: string) {
-    const existing = await courseRepository.getById(id)
-    if (!existing) {
-      throw new Error("Course not found")
+  async deleteManyByIds(ids: string[]) {
+    if (ids.length === 0) {
+      throw new Error("No IDs provided")
     }
-    return await courseRepository.deleteById(id)
+    return await courseRepository.deleteManyByIds(ids)
   }
 }
 

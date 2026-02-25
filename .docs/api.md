@@ -76,7 +76,7 @@ All fields are optional.
 | POST   | `/students`                                 | A, S  | Create a student                                                               |
 | GET    | `/students/:id`                             | A, S  | Full student profile (info, course, grades, reservations, subject eligibility) |
 | PATCH  | `/students/:id`                             | A, S  | Update a student                                                               |
-| DELETE | `/students/:id`                             | A     | Delete a student                                                               |
+| DELETE | `/students`                                 | A     | Bulk delete students by IDs                                                    |
 | GET    | `/students/:id/reservations`                | A, S  | List a student's reservations                                                  |
 | POST   | `/students/:id/reservations`                | A, S  | Reserve a subject for the student                                              |
 | DELETE | `/students/:id/reservations/:reservationId` | A, S  | Cancel a reservation                                                           |
@@ -110,6 +110,14 @@ All fields are optional.
 }
 ```
 
+### `DELETE /students`
+
+```json
+{
+  "ids": ["<uuid>", "<uuid>", "<uuid>"] // * string[] (non-empty array of student UUIDs)
+}
+```
+
 ### `POST /students/:id/reservations`
 
 ```json
@@ -124,12 +132,12 @@ All fields are optional.
 
 ## Courses
 
-| Method | Route          | Roles | Description      |
-| ------ | -------------- | ----- | ---------------- |
-| GET    | `/courses`     | A, S  | List all courses |
-| POST   | `/courses`     | A     | Create a course  |
-| PATCH  | `/courses/:id` | A     | Update a course  |
-| DELETE | `/courses/:id` | A     | Delete a course  |
+| Method | Route          | Roles | Description                |
+| ------ | -------------- | ----- | -------------------------- |
+| GET    | `/courses`     | A, S  | List all courses           |
+| POST   | `/courses`     | A     | Create a course            |
+| PATCH  | `/courses/:id` | A     | Update a course            |
+| DELETE | `/courses`     | A     | Bulk delete courses by IDs |
 
 ### `POST /courses`
 
@@ -153,6 +161,14 @@ All fields are optional.
 }
 ```
 
+### `DELETE /courses`
+
+```json
+{
+  "ids": ["<uuid>", "<uuid>"] // * string[] (non-empty array of course UUIDs)
+}
+```
+
 ---
 
 ## Subjects
@@ -162,7 +178,7 @@ All fields are optional.
 | GET    | `/subjects`                                          | A, S  | List subjects (search, filter by `courseId`, pagination) |
 | POST   | `/subjects`                                          | A     | Create a subject                                         |
 | PATCH  | `/subjects/:id`                                      | A     | Update a subject                                         |
-| DELETE | `/subjects/:id`                                      | A     | Delete a subject                                         |
+| DELETE | `/subjects`                                          | A     | Bulk delete subjects by IDs                              |
 | GET    | `/subjects/:id/prerequisites`                        | A, S  | List prerequisites for a subject                         |
 | POST   | `/subjects/:id/prerequisites`                        | A     | Add a prerequisite to a subject                          |
 | DELETE | `/subjects/:id/prerequisites/:prerequisiteSubjectId` | A     | Remove a prerequisite                                    |
@@ -188,6 +204,14 @@ All fields are optional.
   "title": "Intro to Programming", // ? string
   "units": 3, // ? integer (positive)
   "courseId": "<uuid>" // ? string (UUID of owning course)
+}
+```
+
+### `DELETE /subjects`
+
+```json
+{
+  "ids": ["<uuid>", "<uuid>"] // * string[] (non-empty array of subject UUIDs)
 }
 ```
 

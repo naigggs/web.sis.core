@@ -17,8 +17,8 @@ subjectRoutes.post("/", checkRole(["admin"]), (c) =>
 subjectRoutes.patch("/:id", checkRole(["admin"]), (c) =>
   subjectController.handleUpdateById(c),
 )
-subjectRoutes.delete("/:id", checkRole(["admin"]), (c) =>
-  subjectController.handleDeleteById(c),
+subjectRoutes.delete("/", checkRole(["admin"]), (c) =>
+  subjectController.handleDeleteMany(c),
 )
 
 subjectRoutes.get("/:id/prerequisites", checkRole(["admin", "staff"]), (c) =>

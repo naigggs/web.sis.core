@@ -131,15 +131,21 @@ export class StudentController {
     }
   }
 
-  async handleDeleteById(c: Context) {
+  async handleDeleteMany(c: Context) {
     try {
-      const { id } = c.req.param()
-      await studentService.deleteById(id)
+      const body = await c.req.json()
+      const { ids } = body as { ids: string[] }
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw Object.assign(new Error("ids must be a non-empty array"), {
+          status: 400,
+        })
+      }
+      const deleted = await studentService.deleteManyByIds(ids)
 
       const response = createResponse(
         true,
-        "Student deleted successfully.",
-        null,
+        `${deleted.length} student(s) deleted successfully.`,
+        { deleted },
         [],
         null,
         c.req.header("x-request-id"),
