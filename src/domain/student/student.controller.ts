@@ -190,6 +190,64 @@ export class StudentController {
       return c.json(response, resolveStatusCode(error))
     }
   }
+
+  async handleExport(c: Context) {
+    try {
+      const csv = await studentService.exportToCsv()
+      c.header("Content-Type", "text/csv; charset=utf-8")
+      c.header("Content-Disposition", 'attachment; filename="students.csv"')
+      return c.body(csv)
+    } catch (error: any) {
+      const response = createResponse(
+        false,
+        "Export failed.",
+        null,
+        [error.message],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, resolveStatusCode(error))
+    }
+  }
+
+  async handleImport(c: Context) {
+    try {
+      const formData = await c.req.formData()
+      const file = formData.get("file")
+
+      if (!file || typeof file === "string") {
+        throw Object.assign(
+          new Error(
+            "No CSV file provided. Send a multipart field named 'file'.",
+          ),
+          { status: 400 },
+        )
+      }
+
+      const csvText = await (file as File).text()
+      const result = await studentService.importFromCsv(csvText)
+
+      const response = createResponse(
+        true,
+        `Import complete: ${result.imported} imported, ${result.failed.length} failed.`,
+        result,
+        [],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response)
+    } catch (error: any) {
+      const response = createResponse(
+        false,
+        "Import failed.",
+        null,
+        [error.message],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, resolveStatusCode(error))
+    }
+  }
 }
 
 export const studentController = new StudentController()

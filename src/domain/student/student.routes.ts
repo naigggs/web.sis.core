@@ -15,6 +15,12 @@ studentRoutes.get("/", checkRole(["admin", "staff"]), (c) =>
 studentRoutes.post("/", checkRole(["admin", "staff"]), (c) =>
   studentController.handleCreate(c),
 )
+studentRoutes.get("/export", checkRole(["admin", "staff"]), (c) =>
+  studentController.handleExport(c),
+)
+studentRoutes.post("/import", checkRole(["admin", "staff"]), (c) =>
+  studentController.handleImport(c),
+)
 studentRoutes.get("/:id", checkRole(["admin", "staff"]), (c) =>
   studentController.handleGetById(c),
 )

@@ -84,7 +84,7 @@ export class StudentService {
 
     const gradeMap = new Map(
       studentGrades
-        .filter((g) => g.finalGrade !== null)
+        .filter((g) => g.finalGrade !== null && g.remarks === "PASSED")
         .map((g) => [g.subjectId, g]),
     )
     const reservedSubjectIds = new Set(reservations.map((r) => r.subjectId))
@@ -125,7 +125,7 @@ export class StudentService {
 
     const gradeMap = new Map(
       studentGrades
-        .filter((g) => g.finalGrade !== null)
+        .filter((g) => g.finalGrade !== null && g.remarks === "PASSED")
         .map((g) => [g.subjectId, g]),
     )
     const reservedSubjectIds = new Set(reservations.map((r) => r.subjectId))
@@ -143,6 +143,119 @@ export class StudentService {
         missingPrerequisites,
       }
     })
+  }
+
+  // ── CSV helpers ────────────────────────────────────────────────────────────
+
+  private escapeCsvField(value: string | null | undefined): string {
+    const str = value ?? ""
+    // Quote fields that contain commas, quotes, or newlines
+    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+      return `"${str.replace(/"/g, '""')}"`
+    }
+    return str
+  }
+
+  private parseCsvLine(line: string): string[] {
+    const fields: string[] = []
+    let current = ""
+    let inQuotes = false
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"'
+          i++
+        } else {
+          inQuotes = !inQuotes
+        }
+      } else if (char === "," && !inQuotes) {
+        fields.push(current.trim())
+        current = ""
+      } else {
+        current += char
+      }
+    }
+    fields.push(current.trim())
+    return fields
+  }
+
+  async exportToCsv(): Promise<string> {
+    const students = await studentRepository.getAllForExport()
+
+    const header = "studentNo,firstName,lastName,email,birthDate,courseId\n"
+    const rows = students
+      .map((s) => {
+        const e = this.escapeCsvField.bind(this)
+        return [
+          e(s.studentNo),
+          e(s.firstName),
+          e(s.lastName),
+          e(s.email),
+          e(s.birthDate),
+          e(s.courseId),
+        ].join(",")
+      })
+      .join("\n")
+
+    return header + rows
+  }
+
+  async importFromCsv(csvText: string) {
+    const lines = csvText
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .split("\n")
+      .filter((l) => l.trim().length > 0)
+
+    if (lines.length < 2) {
+      throw new Error("CSV must contain a header row and at least one data row")
+    }
+
+    // Validate header
+    const expectedHeader =
+      "studentNo,firstName,lastName,email,birthDate,courseId"
+    const headerLine = lines[0].toLowerCase().replace(/\s/g, "")
+    const expectedLower = expectedHeader.toLowerCase().replace(/\s/g, "")
+    if (headerLine !== expectedLower) {
+      throw new Error(`Invalid CSV header. Expected: ${expectedHeader}`)
+    }
+
+    const imported: string[] = []
+    const failed: { row: number; studentNo: string; error: string }[] = []
+
+    for (let i = 1; i < lines.length; i++) {
+      const fields = this.parseCsvLine(lines[i])
+      const [studentNo, firstName, lastName, email, birthDate, courseId] =
+        fields
+      const rowNum = i + 1
+
+      if (!studentNo || !firstName || !lastName || !courseId) {
+        failed.push({
+          row: rowNum,
+          studentNo: studentNo || "(empty)",
+          error: "studentNo, firstName, lastName, and courseId are required",
+        })
+        continue
+      }
+
+      try {
+        await this.create({
+          studentNo,
+          firstName,
+          lastName,
+          email: email || undefined,
+          birthDate: birthDate || undefined,
+          courseId,
+        })
+        imported.push(studentNo)
+      } catch (err: any) {
+        failed.push({ row: rowNum, studentNo, error: err.message })
+      }
+    }
+
+    return { imported: imported.length, failed }
   }
 }
 

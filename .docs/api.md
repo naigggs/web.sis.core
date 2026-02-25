@@ -81,6 +81,8 @@ All fields are optional.
 | POST   | `/students/:id/reservations`                | A, S  | Reserve a subject for the student                                              |
 | DELETE | `/students/:id/reservations/:reservationId` | A, S  | Cancel a reservation                                                           |
 | GET    | `/students/:id/eligible-subjects`           | A, S  | Returns subjects with eligibility flags                                        |
+| GET    | `/students/export`                          | A, S  | Download all students as a CSV file                                            |
+| POST   | `/students/import`                          | A, S  | Import students from a CSV file (multipart/form-data)                          |
 
 ### `GET /students` — Query Parameters
 
@@ -96,6 +98,50 @@ All fields are optional.
 ```
 GET /students?courseId=<uuid>&search=juan&page=1&limit=10
 ```
+
+---
+
+### `POST /students/import`
+
+Upload a CSV file using `multipart/form-data` with the field name `file`.
+
+**CSV format** (first row must be this exact header):
+
+```csv
+studentNo,firstName,lastName,email,birthDate,courseId
+2024-00001,Juan,dela Cruz,juan@sis.edu,2000-01-15,<uuid>
+2024-00002,Maria,Santos,,,<uuid>
+```
+
+| Column      | Required | Description                                 |
+| ----------- | -------- | ------------------------------------------- |
+| `studentNo` | ✅       | Unique student number                       |
+| `firstName` | ✅       | First name                                  |
+| `lastName`  | ✅       | Last name                                   |
+| `email`     | ❌       | Email address                               |
+| `birthDate` | ❌       | ISO date (`YYYY-MM-DD`)                     |
+| `courseId`  | ✅       | UUID of the course to enroll the student in |
+
+**Response:**
+
+```json
+{
+  "data": {
+    "imported": 48,
+    "failed": [
+      {
+        "row": 3,
+        "studentNo": "2024-00003",
+        "error": "Student number already exists"
+      }
+    ]
+  }
+}
+```
+
+### `GET /students/export`
+
+Returns a `students.csv` file download — no request body needed.
 
 ---
 

@@ -81,6 +81,13 @@ export class StudentRepository {
   async deleteManyByIds(ids: string[]) {
     return await db.delete(student).where(inArray(student.id, ids)).returning()
   }
+
+  async getAllForExport() {
+    return await db.query.student.findMany({
+      with: { course: true },
+      orderBy: student.studentNo,
+    })
+  }
 }
 
 export const studentRepository = new StudentRepository()
