@@ -1,5 +1,5 @@
 {
-  "id": "379fd0bc-0365-4c19-9f4c-b4e9d00c43d5",
+  "id": "1199d477-69c3-428e-839a-b3520d162c83",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -309,7 +309,24 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "subjects_course_id_code_unique": {
+          "name": "subjects_course_id_code_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "course_id",
+            "code"
+          ]
+        },
+        "subjects_course_id_title_unique": {
+          "name": "subjects_course_id_title_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "course_id",
+            "title"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -350,7 +367,8 @@
         },
         "remarks": {
           "name": "remarks",
-          "type": "text",
+          "type": "grade_remarks",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -449,7 +467,17 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "grades_student_id_subject_id_course_id_unique": {
+          "name": "grades_student_id_subject_id_course_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "student_id",
+            "subject_id",
+            "course_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -470,7 +498,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'reserved'"
+          "default": "'RESERVED'"
         },
         "reserved_at": {
           "name": "reserved_at",
@@ -522,7 +550,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "subject_reservations_student_id_subject_id_unique": {
+          "name": "subject_reservations_student_id_subject_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "student_id",
+            "subject_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -587,7 +624,16 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "subject_prerequisites_subject_id_prerequisite_subject_id_unique": {
+          "name": "subject_prerequisites_subject_id_prerequisite_subject_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "subject_id",
+            "prerequisite_subject_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -607,8 +653,16 @@
       "name": "subject_reservation_status",
       "schema": "public",
       "values": [
-        "reserved",
-        "cancelled"
+        "RESERVED",
+        "CANCELLED"
+      ]
+    },
+    "public.grade_remarks": {
+      "name": "grade_remarks",
+      "schema": "public",
+      "values": [
+        "PASSED",
+        "FAILED"
       ]
     }
   },

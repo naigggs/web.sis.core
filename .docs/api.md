@@ -82,6 +82,23 @@ All fields are optional.
 | DELETE | `/students/:id/reservations/:reservationId` | A, S  | Cancel a reservation                                                           |
 | GET    | `/students/:id/eligible-subjects`           | A, S  | Returns subjects with eligibility flags                                        |
 
+### `GET /students` — Query Parameters
+
+| Parameter  | Type   | Description                                           |
+| ---------- | ------ | ----------------------------------------------------- |
+| `page`     | number | Page number (default: `1`)                            |
+| `limit`    | number | Items per page (default: `10`)                        |
+| `search`   | string | Search by first name, last name, student no, or email |
+| `courseId` | string | Filter by course UUID                                 |
+
+**Example:**
+
+```
+GET /students?courseId=<uuid>&search=juan&page=1&limit=10
+```
+
+---
+
 ### `POST /students`
 
 ```json

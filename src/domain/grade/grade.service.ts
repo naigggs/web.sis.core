@@ -8,7 +8,7 @@ function computeGrade(
   prelim?: number,
   midterm?: number,
   finals?: number,
-): { finalGrade: number; remarks: string } | undefined {
+): { finalGrade: number; remarks: "PASSED" | "FAILED" } | undefined {
   if (prelim === undefined || midterm === undefined || finals === undefined) {
     return undefined
   }

@@ -5,6 +5,7 @@ import { student } from "./student"
 import { subject } from "./subject"
 import { course } from "./course"
 import { user } from "./user"
+import { gradeRemarksEnum } from "../enums/grade"
 
 export const grade = pgTable(
   "grades",
@@ -18,7 +19,7 @@ export const grade = pgTable(
     midterm: numeric("midterm", { precision: 5, scale: 2 }),
     finals: numeric("finals", { precision: 5, scale: 2 }),
     finalGrade: numeric("final_grade", { precision: 5, scale: 2 }),
-    remarks: text("remarks"),
+    remarks: gradeRemarksEnum("remarks"),
 
     // Foreign keys
     studentId: text("student_id")

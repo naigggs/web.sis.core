@@ -13,7 +13,7 @@ export const subjectReservation = pgTable(
       .$defaultFn(() => `${uuidv7()}`),
 
     status: subjectReservationStatusEnum("status")
-      .default("reserved")
+      .default("RESERVED")
       .notNull(),
     reservedAt: timestamp("reserved_at").defaultNow().notNull(),
 

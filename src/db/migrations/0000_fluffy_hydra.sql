@@ -1,5 +1,6 @@
 CREATE TYPE "public"."user_role" AS ENUM('student', 'staff', 'admin');--> statement-breakpoint
-CREATE TYPE "public"."subject_reservation_status" AS ENUM('reserved', 'cancelled');--> statement-breakpoint
+CREATE TYPE "public"."subject_reservation_status" AS ENUM('RESERVED', 'CANCELLED');--> statement-breakpoint
+CREATE TYPE "public"."grade_remarks" AS ENUM('PASSED', 'FAILED');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" text PRIMARY KEY NOT NULL,
 	"email" text,
@@ -44,7 +45,9 @@ CREATE TABLE "subjects" (
 	"units" integer NOT NULL,
 	"course_id" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "subjects_course_id_code_unique" UNIQUE("course_id","code"),
+	CONSTRAINT "subjects_course_id_title_unique" UNIQUE("course_id","title")
 );
 --> statement-breakpoint
 CREATE TABLE "grades" (
@@ -53,28 +56,31 @@ CREATE TABLE "grades" (
 	"midterm" numeric(5, 2),
 	"finals" numeric(5, 2),
 	"final_grade" numeric(5, 2),
-	"remarks" text,
+	"remarks" "grade_remarks",
 	"student_id" text NOT NULL,
 	"subject_id" text NOT NULL,
 	"course_id" text NOT NULL,
 	"encoded_by_user_id" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "grades_student_id_subject_id_course_id_unique" UNIQUE("student_id","subject_id","course_id")
 );
 --> statement-breakpoint
 CREATE TABLE "subject_reservations" (
 	"id" text PRIMARY KEY NOT NULL,
-	"status" "subject_reservation_status" DEFAULT 'reserved' NOT NULL,
+	"status" "subject_reservation_status" DEFAULT 'RESERVED' NOT NULL,
 	"reserved_at" timestamp DEFAULT now() NOT NULL,
 	"student_id" text NOT NULL,
-	"subject_id" text NOT NULL
+	"subject_id" text NOT NULL,
+	CONSTRAINT "subject_reservations_student_id_subject_id_unique" UNIQUE("student_id","subject_id")
 );
 --> statement-breakpoint
 CREATE TABLE "subject_prerequisites" (
 	"id" text PRIMARY KEY NOT NULL,
 	"subject_id" text NOT NULL,
 	"prerequisite_subject_id" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "subject_prerequisites_subject_id_prerequisite_subject_id_unique" UNIQUE("subject_id","prerequisite_subject_id")
 );
 --> statement-breakpoint
 ALTER TABLE "students" ADD CONSTRAINT "students_course_id_courses_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."courses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

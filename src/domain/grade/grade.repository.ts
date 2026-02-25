@@ -50,7 +50,7 @@ export class GradeRepository {
     data: CreateGradeDTO & {
       encodedByUserId: string
       finalGrade?: number
-      remarks?: string
+      remarks?: "PASSED" | "FAILED"
     },
   ) {
     const { studentId, subjectId, courseId, encodedByUserId, ...values } = data
@@ -87,7 +87,7 @@ export class GradeRepository {
     data: UpdateGradeDTO & {
       encodedByUserId: string
       finalGrade?: number
-      remarks?: string
+      remarks?: "PASSED" | "FAILED"
     },
   ) {
     const { encodedByUserId, ...values } = data

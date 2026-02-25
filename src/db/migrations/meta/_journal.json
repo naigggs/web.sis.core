@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1771954034069,
-      "tag": "0000_futuristic_sentinel",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1771954416603,
-      "tag": "0001_flowery_shooting_star",
+      "when": 1771991724978,
+      "tag": "0000_fluffy_hydra",
       "breakpoints": true
     }
   ]

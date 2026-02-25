@@ -379,7 +379,7 @@ async function seedGrades(
     midterm: string
     finals: string
     finalGrade: string
-    remarks: string
+    remarks: "PASSED" | "FAILED"
   }[] = []
 
   for (const s of students.slice(0, 20)) {
@@ -397,7 +397,7 @@ async function seedGrades(
         midterm: "85.00",
         finals: "88.00",
         finalGrade: "85.00",
-        remarks: "Passed",
+        remarks: "PASSED",
       })
     }
   }
