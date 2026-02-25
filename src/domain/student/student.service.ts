@@ -64,6 +64,11 @@ export class StudentService {
     if (ids.length === 0) {
       throw new Error("No IDs provided")
     }
+    // Delete child rows first to satisfy FK constraints
+    await Promise.all([
+      gradeRepository.deleteByStudentIds(ids),
+      reservationRepository.deleteByStudentIds(ids),
+    ])
     return await studentRepository.deleteManyByIds(ids)
   }
 

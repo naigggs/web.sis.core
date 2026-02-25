@@ -1,4 +1,4 @@
-import { eq, and, SQL } from "drizzle-orm"
+import { eq, and, inArray, SQL } from "drizzle-orm"
 
 import { db } from "../../config/database"
 import { grade } from "../../db/schema/grade"
@@ -115,6 +115,14 @@ export class GradeRepository {
       where: eq(grade.studentId, studentId),
       with: { subject: true, course: true },
     })
+  }
+
+  async deleteByStudentIds(studentIds: string[]) {
+    if (studentIds.length === 0) return []
+    return await db
+      .delete(grade)
+      .where(inArray(grade.studentId, studentIds))
+      .returning()
   }
 }
 

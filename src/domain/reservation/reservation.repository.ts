@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm"
+import { eq, and, inArray } from "drizzle-orm"
 
 import { db } from "../../config/database"
 import { subjectReservation } from "../../db/schema/subject-reservation"
@@ -57,6 +57,14 @@ export class ReservationRepository {
     return await db
       .delete(subjectReservation)
       .where(eq(subjectReservation.id, reservationId))
+      .returning()
+  }
+
+  async deleteByStudentIds(studentIds: string[]) {
+    if (studentIds.length === 0) return []
+    return await db
+      .delete(subjectReservation)
+      .where(inArray(subjectReservation.studentId, studentIds))
       .returning()
   }
 }
