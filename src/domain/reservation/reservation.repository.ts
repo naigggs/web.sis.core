@@ -80,6 +80,16 @@ export class ReservationRepository {
     )
   }
 
+  async countApprovedBySubject(subjectId: string): Promise<number> {
+    return await db.$count(
+      subjectReservation,
+      and(
+        eq(subjectReservation.subjectId, subjectId),
+        eq(subjectReservation.status, "APPROVED"),
+      ),
+    )
+  }
+
   async updateStatus(reservationId: string, status: ReservationStatus) {
     const [updated] = await db
       .update(subjectReservation)

@@ -1,6 +1,7 @@
 import { db } from "../../config/database"
 import { course } from "../schema/course"
 import { student } from "../schema/student"
+import { user } from "../schema/user"
 
 const COURSES = [
   { code: "BSCS", name: "Bachelor of Science in Computer Science" },
@@ -118,7 +119,28 @@ async function seed() {
     .onConflictDoNothing()
     .returning()
 
-  console.log(`✅ Seeded ${inserted.length} students successfully.`)
+  // Create linked user accounts (password = birthDate, fallback = studentNo)
+  console.log("👤 Creating student user accounts...")
+  let userCount = 0
+  for (const s of inserted) {
+    const rawPassword = s.birthDate ?? s.studentNo
+    const hashedPassword = await Bun.password.hash(rawPassword)
+    const newUser = await db
+      .insert(user)
+      .values({
+        email: s.email,
+        password: hashedPassword,
+        role: "student",
+        studentId: s.id,
+      })
+      .onConflictDoNothing()
+      .returning()
+    if (newUser.length > 0) userCount++
+  }
+
+  console.log(
+    `✅ Seeded ${inserted.length} students and ${userCount} user accounts successfully.`,
+  )
   process.exit(0)
 }
 

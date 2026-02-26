@@ -236,6 +236,36 @@ export class SubjectController {
       return c.json(response, resolveStatusCode(error))
     }
   }
+
+  async handleGetApprovedStudents(c: Context) {
+    try {
+      const { id } = c.req.param()
+      const students = await subjectService.getApprovedStudents(id)
+
+      return c.json(
+        createResponse(
+          true,
+          "Approved students retrieved successfully.",
+          { students },
+          [],
+          null,
+          c.req.header("x-request-id"),
+        ),
+      )
+    } catch (error: any) {
+      return c.json(
+        createResponse(
+          false,
+          "Failed to retrieve approved students.",
+          null,
+          [error.message],
+          null,
+          c.req.header("x-request-id"),
+        ),
+        resolveStatusCode(error),
+      )
+    }
+  }
 }
 
 export const subjectController = new SubjectController()

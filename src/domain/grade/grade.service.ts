@@ -2,6 +2,7 @@ import { gradeRepository } from "./grade.repository"
 import { studentRepository } from "../student/student.repository"
 import { subjectRepository } from "../subject/subject.repository"
 import { courseRepository } from "../course/course.repository"
+import { reservationRepository } from "../reservation/reservation.repository"
 import type { CreateGradeDTO, UpdateGradeDTO, ListGradeDTO } from "./grade.dto"
 
 function computeGrade(
@@ -33,6 +34,17 @@ export class GradeService {
     if (!student) throw new Error("Student not found")
     if (!subject) throw new Error("Subject not found")
     if (!course) throw new Error("Course not found")
+
+    // Reservation must be APPROVED before grading
+    const reservation = await reservationRepository.getByStudentAndSubject(
+      data.studentId,
+      data.subjectId,
+    )
+    if (!reservation || reservation.status !== "APPROVED") {
+      throw new Error(
+        "Student does not have an approved reservation for this subject",
+      )
+    }
 
     const computed = computeGrade(data.prelim, data.midterm, data.finals)
     return await gradeRepository.upsert({

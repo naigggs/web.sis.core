@@ -335,14 +335,31 @@ async function seedStudents(courses: { id: string }[]) {
     }
   })
 
-  const inserted = await db
-    .insert(student)
-    .values(students)
-    .onConflictDoNothing()
-    .returning()
+  await db.insert(student).values(students).onConflictDoNothing()
 
   const all = await db.query.student.findMany({ limit: 50 })
   console.log(`   ✅ ${all.length} students ready.`)
+
+  // Create linked user accounts (password = birthDate, fallback = studentNo)
+  console.log("   👤 Creating student user accounts...")
+  let userCount = 0
+  for (const s of all) {
+    const rawPassword = s.birthDate ?? s.studentNo
+    const hashedPassword = await Bun.password.hash(rawPassword)
+    const inserted = await db
+      .insert(user)
+      .values({
+        email: s.email,
+        password: hashedPassword,
+        role: "student",
+        studentId: s.id,
+      })
+      .onConflictDoNothing()
+      .returning()
+    if (inserted.length > 0) userCount++
+  }
+  console.log(`   ✅ ${userCount} student user accounts created.`)
+
   return all
 }
 
@@ -469,6 +486,9 @@ async function main() {
   console.log("\n📋 Admin Credentials:")
   console.log("   Email:    admin@sis.edu")
   console.log("   Password: Admin@1234")
+  console.log("\n📋 Student Login:")
+  console.log("   Email:    <student email>")
+  console.log("   Password: <student birthDate, e.g. 2000-01-01>")
   process.exit(0)
 }
 

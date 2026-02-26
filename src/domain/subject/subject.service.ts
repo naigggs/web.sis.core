@@ -18,6 +18,12 @@ export class SubjectService {
     return subject
   }
 
+  async getApprovedStudents(id: string) {
+    const subject = await subjectRepository.getById(id)
+    if (!subject) throw new Error("Subject not found")
+    return await subjectRepository.getApprovedStudents(id)
+  }
+
   async create(data: CreateSubjectDTO) {
     const existingCode = await subjectRepository.getByCodeAndCourse(
       data.code,

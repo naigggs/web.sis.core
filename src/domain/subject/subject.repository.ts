@@ -3,6 +3,8 @@ import { eq, ilike, or, and, inArray, SQL } from "drizzle-orm"
 import { db } from "../../config/database"
 import { subject } from "../../db/schema/subject"
 import { subjectPrerequisite } from "../../db/schema/subject-prerequisite"
+import { subjectReservation } from "../../db/schema/subject-reservation"
+import { grade } from "../../db/schema/grade"
 import type {
   CreateSubjectDTO,
   UpdateSubjectDTO,
@@ -133,6 +135,32 @@ export class SubjectRepository {
         },
       },
     })
+  }
+
+  async getApprovedStudents(subjectId: string) {
+    const [reservations, grades] = await Promise.all([
+      db.query.subjectReservation.findMany({
+        where: and(
+          eq(subjectReservation.subjectId, subjectId),
+          eq(subjectReservation.status, "APPROVED"),
+        ),
+        with: {
+          student: {
+            with: { course: true },
+          },
+        },
+      }),
+      db.query.grade.findMany({
+        where: and(eq(grade.subjectId, subjectId)),
+      }),
+    ])
+
+    const gradeByStudentId = new Map(grades.map((g) => [g.studentId, g]))
+
+    return reservations.map((r) => ({
+      ...r.student,
+      grade: gradeByStudentId.get(r.student.id) ?? null,
+    }))
   }
 }
 

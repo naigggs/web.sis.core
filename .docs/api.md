@@ -260,6 +260,7 @@ All fields are optional.
 | POST   | `/subjects`                                          | A     | Create a subject                                         |
 | PATCH  | `/subjects/:id`                                      | A     | Update a subject                                         |
 | DELETE | `/subjects`                                          | A     | Bulk delete subjects by IDs                              |
+| GET    | `/subjects/:id/enrolled-students`                    | A, S  | Students with an approved reservation (grading sheet)    |
 | GET    | `/subjects/:id/prerequisites`                        | A, S  | List prerequisites for a subject                         |
 | POST   | `/subjects/:id/prerequisites`                        | A     | Add a prerequisite to a subject                          |
 | DELETE | `/subjects/:id/prerequisites/:prerequisiteSubjectId` | A     | Remove a prerequisite                                    |
@@ -308,6 +309,40 @@ All fields are optional.
 
 > Prerequisites must belong to the same course. Self-referencing and circular chains are rejected.
 
+### `GET /subjects/:id/enrolled-students`
+
+Returns all students with an `APPROVED` reservation for the given subject, each merged with their current grade record for that subject. Intended for the grading sheet UI.
+
+**Response shape per student:**
+
+```json
+{
+  "id": "<uuid>",
+  "studentNo": "2026-00001",
+  "firstName": "James",
+  "lastName": "Santos",
+  "email": "james.santos1@student.edu",
+  "birthDate": "2000-01-01",
+  "course": { "id": "<uuid>", "code": "BSIT", "name": "..." },
+  "grade": {
+    "id": "<uuid>",
+    "prelim": "82.00",
+    "midterm": "85.00",
+    "finals": "88.00",
+    "finalGrade": "85.00",
+    "remarks": "PASSED"
+  }
+}
+```
+
+> `grade` is `null` if the student has not yet been graded for this subject.
+
+**Typical grading sheet flow:**
+
+1. `GET /courses` → populate Course dropdown
+2. `GET /subjects?courseId=<uuid>` → populate Subject dropdown
+3. `GET /subjects/:id/enrolled-students` → load grading sheet rows
+
 ---
 
 ## Student Self-Service (`/students/me`)
@@ -354,6 +389,8 @@ These routes require a `student`-role JWT. The student ID is taken from the toke
   "finals": 88.0 // ? number (0–100)
 }
 ```
+
+> The student must have an **`APPROVED`** reservation for the subject before a grade can be created. Use `GET /subjects/:id/enrolled-students` to get the list of gradable students.
 
 ### `PATCH /grades/:id`
 

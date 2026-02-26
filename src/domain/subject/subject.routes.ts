@@ -32,3 +32,8 @@ subjectRoutes.delete(
   checkRole(["admin"]),
   (c) => subjectController.handleRemovePrerequisite(c),
 )
+subjectRoutes.get(
+  "/:id/enrolled-students",
+  checkRole(["admin", "staff"]),
+  (c) => subjectController.handleGetApprovedStudents(c),
+)

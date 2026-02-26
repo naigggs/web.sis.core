@@ -99,6 +99,20 @@ export class ReservationService {
     if (reservation.status === status) {
       throw new Error(`Reservation is already ${status}`)
     }
+
+    // Enforce slot limit on approval
+    if (status === "APPROVED") {
+      const slotLimit = reservation.subject.slotLimit
+      const approvedCount = await reservationRepository.countApprovedBySubject(
+        reservation.subjectId,
+      )
+      if (approvedCount >= slotLimit) {
+        throw new Error(
+          `Cannot approve: subject "${reservation.subject.code}" has reached its slot limit of ${slotLimit}.`,
+        )
+      }
+    }
+
     return await reservationRepository.updateStatus(reservationId, status)
   }
 }
