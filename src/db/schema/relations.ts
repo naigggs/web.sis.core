@@ -9,8 +9,12 @@ import { subjectReservation } from "./subject-reservation"
 import { subjectPrerequisite } from "./subject-prerequisite"
 
 // ─── User Relations ───────────────────────────────────────────────────────────
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ one, many }) => ({
   encodedGrades: many(grade),
+  student: one(student, {
+    fields: [user.studentId],
+    references: [student.id],
+  }),
 }))
 
 // ─── Course Relations ─────────────────────────────────────────────────────────
@@ -25,6 +29,10 @@ export const studentRelations = relations(student, ({ one, many }) => ({
   course: one(course, {
     fields: [student.courseId],
     references: [course.id],
+  }),
+  linkedUser: one(user, {
+    fields: [student.id],
+    references: [user.studentId],
   }),
   grades: many(grade),
   subjectReservations: many(subjectReservation),

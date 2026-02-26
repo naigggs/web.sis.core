@@ -21,6 +21,25 @@ studentRoutes.get("/export", checkRole(["admin", "staff"]), (c) =>
 studentRoutes.post("/import", checkRole(["admin", "staff"]), (c) =>
   studentController.handleImport(c),
 )
+
+// ── Student "me" routes (must be before /:id) ─────────────────────────────
+studentRoutes.get("/me", checkRole(["student"]), (c) =>
+  studentController.handleGetMe(c),
+)
+studentRoutes.get("/me/reservations", checkRole(["student"]), (c) =>
+  reservationController.handleMeGetReservations(c),
+)
+studentRoutes.post("/me/reservations", checkRole(["student"]), (c) =>
+  reservationController.handleMeReserve(c),
+)
+studentRoutes.delete(
+  "/me/reservations/:reservationId",
+  checkRole(["student"]),
+  (c) => reservationController.handleMeCancel(c),
+)
+studentRoutes.get("/me/eligible-subjects", checkRole(["student"]), (c) =>
+  studentController.handleGetMeEligibleSubjects(c),
+)
 studentRoutes.get("/:id", checkRole(["admin", "staff"]), (c) =>
   studentController.handleGetById(c),
 )
@@ -42,6 +61,11 @@ studentRoutes.delete(
   "/:id/reservations/:reservationId",
   checkRole(["admin", "staff"]),
   (c) => reservationController.handleCancel(c),
+)
+studentRoutes.patch(
+  "/:id/reservations/:reservationId",
+  checkRole(["admin", "staff"]),
+  (c) => reservationController.handleUpdateStatus(c),
 )
 
 // Eligible subjects

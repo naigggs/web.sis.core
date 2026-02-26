@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm"
+import { eq, inArray } from "drizzle-orm"
 
 import { db } from "../../config/database"
 import { user } from "../../db/schema/user"
@@ -36,9 +36,10 @@ export class UserRepository {
     const [newUser] = await db
       .insert(user)
       .values({
-        email: data.email,
+        email: data.email ?? null,
         password: data.password,
         role: data.role ?? "student",
+        studentId: data.studentId ?? null,
       })
       .returning()
 
@@ -67,6 +68,14 @@ export class UserRepository {
 
   async hardDeleteById(id: string) {
     return await db.delete(user).where(eq(user.id, id)).returning()
+  }
+
+  async deleteByStudentIds(studentIds: string[]) {
+    if (studentIds.length === 0) return []
+    return await db
+      .delete(user)
+      .where(inArray(user.studentId, studentIds))
+      .returning()
   }
 }
 

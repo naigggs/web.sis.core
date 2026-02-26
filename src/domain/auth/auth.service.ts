@@ -23,6 +23,7 @@ export class AuthService {
     const accessPayload = {
       sub: user.id,
       role: user.role,
+      studentId: user.studentId ?? undefined,
       type: "access",
       exp: Math.floor(Date.now() / 1000) + env.JWT_ACCESS_TOKEN_LIFETIME,
     }

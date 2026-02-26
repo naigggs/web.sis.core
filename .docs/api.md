@@ -4,7 +4,7 @@ Base URL: `http://localhost:3000/api/v1`
 
 All routes except `POST /auth/login` require a valid `accessToken` cookie (set automatically on login).
 
-Role legend — **A** = admin, **S** = staff  
+Role legend — **A** = admin, **S** = staff, **St** = student  
 `*` = required field, `?` = optional field
 
 ---
@@ -73,16 +73,22 @@ All fields are optional.
 | Method | Route                                       | Roles | Description                                                                    |
 | ------ | ------------------------------------------- | ----- | ------------------------------------------------------------------------------ |
 | GET    | `/students`                                 | A, S  | List students (search, filter by `courseId`, pagination)                       |
-| POST   | `/students`                                 | A, S  | Create a student                                                               |
+| POST   | `/students`                                 | A, S  | Create a student (auto-creates a linked user account)                          |
 | GET    | `/students/:id`                             | A, S  | Full student profile (info, course, grades, reservations, subject eligibility) |
 | PATCH  | `/students/:id`                             | A, S  | Update a student                                                               |
 | DELETE | `/students`                                 | A     | Bulk delete students by IDs                                                    |
-| GET    | `/students/:id/reservations`                | A, S  | List a student's reservations                                                  |
-| POST   | `/students/:id/reservations`                | A, S  | Reserve a subject for the student                                              |
-| DELETE | `/students/:id/reservations/:reservationId` | A, S  | Cancel a reservation                                                           |
-| GET    | `/students/:id/eligible-subjects`           | A, S  | Returns subjects with eligibility flags                                        |
 | GET    | `/students/export`                          | A, S  | Download all students as a CSV file                                            |
 | POST   | `/students/import`                          | A, S  | Import students from a CSV file (multipart/form-data)                          |
+| GET    | `/students/me`                              | St    | Own full student profile                                                       |
+| GET    | `/students/me/reservations`                 | St    | Own reservations                                                               |
+| POST   | `/students/me/reservations`                 | St    | Reserve a subject (self)                                                       |
+| DELETE | `/students/me/reservations/:reservationId`  | St    | Cancel own reservation                                                         |
+| GET    | `/students/me/eligible-subjects`            | St    | Own eligible subjects                                                          |
+| GET    | `/students/:id/reservations`                | A, S  | List a student's reservations                                                  |
+| POST   | `/students/:id/reservations`                | A, S  | Reserve a subject for the student                                              |
+| PATCH  | `/students/:id/reservations/:reservationId` | A, S  | Approve or deny a reservation                                                  |
+| DELETE | `/students/:id/reservations/:reservationId` | A, S  | Cancel a reservation                                                           |
+| GET    | `/students/:id/eligible-subjects`           | A, S  | Returns subjects with eligibility flags                                        |
 
 ### `GET /students` — Query Parameters
 
@@ -158,6 +164,8 @@ Returns a `students.csv` file download — no request body needed.
 }
 ```
 
+> A `users` account is automatically created for the student with `role = "student"`. The password is set to the student's `birthDate` (e.g. `2000-01-15`), or falls back to `studentNo` if no birthDate is provided. Students can log in immediately at `POST /auth/login` using their email and birthDate.
+
 ### `PATCH /students/:id`
 
 All fields are optional.
@@ -189,7 +197,17 @@ All fields are optional.
 }
 ```
 
-> Subject must belong to the student's enrolled course. All prerequisites must be passed (grade ≥ 75) before reserving.
+> Subject must belong to the student's enrolled course. All prerequisites must be **passed** (remarks = `PASSED`) before reserving. Each subject has a slot limit (default **10**); reservations are rejected once the limit is reached.
+
+### `PATCH /students/:id/reservations/:reservationId`
+
+```json
+{
+  "status": "APPROVED" // * "APPROVED" | "DENIED"
+}
+```
+
+> Only admin and staff can approve or deny reservations. A cancelled reservation cannot be updated. Reservation statuses: `RESERVED` → `APPROVED` | `DENIED` | `CANCELLED`.
 
 ---
 
@@ -253,7 +271,8 @@ All fields are optional.
   "code": "CS101", // * string
   "title": "Introduction to Programming", // * string
   "units": 3, // * integer (positive)
-  "courseId": "<uuid>" // * string (UUID of owning course)
+  "courseId": "<uuid>", // * string (UUID of owning course)
+  "slotLimit": 10 // ? integer (max reservations, default: 10)
 }
 ```
 
@@ -266,7 +285,8 @@ All fields are optional.
   "code": "CS101", // ? string
   "title": "Intro to Programming", // ? string
   "units": 3, // ? integer (positive)
-  "courseId": "<uuid>" // ? string (UUID of owning course)
+  "courseId": "<uuid>", // ? string (UUID of owning course)
+  "slotLimit": 20 // ? integer (max reservations)
 }
 ```
 
@@ -287,6 +307,30 @@ All fields are optional.
 ```
 
 > Prerequisites must belong to the same course. Self-referencing and circular chains are rejected.
+
+---
+
+## Student Self-Service (`/students/me`)
+
+These routes require a `student`-role JWT. The student ID is taken from the token — no ID parameter is needed.
+
+| Method | Route                                      | Description                             |
+| ------ | ------------------------------------------ | --------------------------------------- |
+| GET    | `/students/me`                             | Own full profile (grades, reservations) |
+| GET    | `/students/me/eligible-subjects`           | Subjects eligible for reservation       |
+| GET    | `/students/me/reservations`                | Own reservation list                    |
+| POST   | `/students/me/reservations`                | Reserve a subject                       |
+| DELETE | `/students/me/reservations/:reservationId` | Cancel own reservation                  |
+
+### `POST /students/me/reservations`
+
+```json
+{
+  "subjectId": "<uuid>" // * string (UUID of subject to reserve)
+}
+```
+
+> Same validation rules as the admin-side reserve: course match, prerequisites passed, slot limit enforced.
 
 ---
 

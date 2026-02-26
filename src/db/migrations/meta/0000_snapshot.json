@@ -1,5 +1,5 @@
 {
-  "id": "1199d477-69c3-428e-839a-b3520d162c83",
+  "id": "b1a74c84-043a-4584-b242-3836078cff80",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -33,6 +33,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'student'"
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "isActive": {
           "name": "isActive",
@@ -71,7 +77,21 @@
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "users_student_id_students_id_fk": {
+          "name": "users_student_id_students_id_fk",
+          "tableFrom": "users",
+          "tableTo": "students",
+          "columnsFrom": [
+            "student_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "users_email_unique": {
@@ -270,6 +290,13 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "slot_limit": {
+          "name": "slot_limit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
         },
         "course_id": {
           "name": "course_id",
@@ -654,7 +681,9 @@
       "schema": "public",
       "values": [
         "RESERVED",
-        "CANCELLED"
+        "CANCELLED",
+        "APPROVED",
+        "DENIED"
       ]
     },
     "public.grade_remarks": {

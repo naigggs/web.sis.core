@@ -2,6 +2,7 @@ import { studentRepository } from "./student.repository"
 import { subjectRepository } from "../subject/subject.repository"
 import { gradeRepository } from "../grade/grade.repository"
 import { reservationRepository } from "../reservation/reservation.repository"
+import { userRepository } from "../user/user.repository"
 import type {
   CreateStudentDTO,
   UpdateStudentDTO,
@@ -34,7 +35,19 @@ export class StudentService {
       }
     }
 
-    return await studentRepository.create(data)
+    const newStudent = await studentRepository.create(data)
+
+    // Auto-create linked user account (password = birthDate, fallback to studentNo)
+    const rawPassword = data.birthDate ?? data.studentNo
+    const hashedPassword = await Bun.password.hash(rawPassword)
+    await userRepository.create({
+      email: data.email ?? undefined,
+      password: hashedPassword,
+      role: "student",
+      studentId: newStudent.id,
+    })
+
+    return newStudent
   }
 
   async updateById(id: string, data: UpdateStudentDTO) {
@@ -68,6 +81,7 @@ export class StudentService {
     await Promise.all([
       gradeRepository.deleteByStudentIds(ids),
       reservationRepository.deleteByStudentIds(ids),
+      userRepository.deleteByStudentIds(ids),
     ])
     return await studentRepository.deleteManyByIds(ids)
   }

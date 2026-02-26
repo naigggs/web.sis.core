@@ -1,11 +1,12 @@
 CREATE TYPE "public"."user_role" AS ENUM('student', 'staff', 'admin');--> statement-breakpoint
-CREATE TYPE "public"."subject_reservation_status" AS ENUM('RESERVED', 'CANCELLED');--> statement-breakpoint
+CREATE TYPE "public"."subject_reservation_status" AS ENUM('RESERVED', 'CANCELLED', 'APPROVED', 'DENIED');--> statement-breakpoint
 CREATE TYPE "public"."grade_remarks" AS ENUM('PASSED', 'FAILED');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" text PRIMARY KEY NOT NULL,
 	"email" text,
 	"password" text,
 	"role" "user_role" DEFAULT 'student' NOT NULL,
+	"student_id" text,
 	"isActive" boolean DEFAULT true,
 	"isBlocked" boolean DEFAULT false,
 	"isSuspended" boolean DEFAULT false,
@@ -43,6 +44,7 @@ CREATE TABLE "subjects" (
 	"code" text NOT NULL,
 	"title" text NOT NULL,
 	"units" integer NOT NULL,
+	"slot_limit" integer DEFAULT 10 NOT NULL,
 	"course_id" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
@@ -83,6 +85,7 @@ CREATE TABLE "subject_prerequisites" (
 	CONSTRAINT "subject_prerequisites_subject_id_prerequisite_subject_id_unique" UNIQUE("subject_id","prerequisite_subject_id")
 );
 --> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "students" ADD CONSTRAINT "students_course_id_courses_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."courses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subjects" ADD CONSTRAINT "subjects_course_id_courses_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."courses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "grades" ADD CONSTRAINT "grades_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

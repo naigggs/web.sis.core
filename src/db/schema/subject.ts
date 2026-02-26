@@ -13,6 +13,7 @@ export const subject = pgTable(
     code: text("code").notNull(),
     title: text("title").notNull(),
     units: integer("units").notNull(),
+    slotLimit: integer("slot_limit").default(10).notNull(),
 
     // Foreign keys
     courseId: text("course_id")

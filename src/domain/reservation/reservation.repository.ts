@@ -5,6 +5,8 @@ import { subjectReservation } from "../../db/schema/subject-reservation"
 import { subjectPrerequisite } from "../../db/schema/subject-prerequisite"
 import { grade } from "../../db/schema/grade"
 
+export type ReservationStatus = "RESERVED" | "CANCELLED" | "APPROVED" | "DENIED"
+
 export class ReservationRepository {
   async getByStudent(studentId: string) {
     return await db.query.subjectReservation.findMany({
@@ -66,6 +68,25 @@ export class ReservationRepository {
       .delete(subjectReservation)
       .where(inArray(subjectReservation.studentId, studentIds))
       .returning()
+  }
+
+  async countActiveBySubject(subjectId: string): Promise<number> {
+    return await db.$count(
+      subjectReservation,
+      and(
+        eq(subjectReservation.subjectId, subjectId),
+        inArray(subjectReservation.status, ["RESERVED", "APPROVED"]),
+      ),
+    )
+  }
+
+  async updateStatus(reservationId: string, status: ReservationStatus) {
+    const [updated] = await db
+      .update(subjectReservation)
+      .set({ status })
+      .where(eq(subjectReservation.id, reservationId))
+      .returning()
+    return updated
   }
 }
 

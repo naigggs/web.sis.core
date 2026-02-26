@@ -248,6 +248,92 @@ export class StudentController {
       return c.json(response, resolveStatusCode(error))
     }
   }
+
+  // ── Student "me" handlers ─────────────────────────────────────────────────
+
+  async handleGetMe(c: Context) {
+    try {
+      const user = c.get("user") as { studentId?: string }
+      if (!user.studentId) {
+        return c.json(
+          createResponse(
+            false,
+            "No student profile linked to this account.",
+            null,
+            [],
+            null,
+            c.req.header("x-request-id"),
+          ),
+          HTTP_STATUS.BAD_REQUEST,
+        )
+      }
+      const student = await studentService.getDetailedById(user.studentId)
+      return c.json(
+        createResponse(
+          true,
+          "Student profile retrieved successfully.",
+          { student },
+          [],
+          null,
+          c.req.header("x-request-id"),
+        ),
+      )
+    } catch (error: any) {
+      return c.json(
+        createResponse(
+          false,
+          "Failed to retrieve student profile.",
+          null,
+          [error.message],
+          null,
+          c.req.header("x-request-id"),
+        ),
+        resolveStatusCode(error),
+      )
+    }
+  }
+
+  async handleGetMeEligibleSubjects(c: Context) {
+    try {
+      const user = c.get("user") as { studentId?: string }
+      if (!user.studentId) {
+        return c.json(
+          createResponse(
+            false,
+            "No student profile linked to this account.",
+            null,
+            [],
+            null,
+            c.req.header("x-request-id"),
+          ),
+          HTTP_STATUS.BAD_REQUEST,
+        )
+      }
+      const subjects = await studentService.getEligibleSubjects(user.studentId)
+      return c.json(
+        createResponse(
+          true,
+          "Eligible subjects retrieved successfully.",
+          { subjects },
+          [],
+          null,
+          c.req.header("x-request-id"),
+        ),
+      )
+    } catch (error: any) {
+      return c.json(
+        createResponse(
+          false,
+          "Failed to retrieve eligible subjects.",
+          null,
+          [error.message],
+          null,
+          c.req.header("x-request-id"),
+        ),
+        resolveStatusCode(error),
+      )
+    }
+  }
 }
 
 export const studentController = new StudentController()

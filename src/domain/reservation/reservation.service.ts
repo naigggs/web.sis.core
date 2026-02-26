@@ -1,6 +1,7 @@
 import { reservationRepository } from "./reservation.repository"
 import { studentRepository } from "../student/student.repository"
 import { subjectRepository } from "../subject/subject.repository"
+import type { ReservationStatus } from "./reservation.repository"
 
 export class ReservationService {
   async getByStudent(studentId: string) {
@@ -30,6 +31,15 @@ export class ReservationService {
       subjectId,
     )
     if (alreadyReserved) throw new Error("Subject already reserved")
+
+    // Validation 3: slot limit
+    const activeCount =
+      await reservationRepository.countActiveBySubject(subjectId)
+    if (activeCount >= subject.slotLimit) {
+      throw new Error(
+        `Subject is full. Maximum of ${subject.slotLimit} reservations allowed.`,
+      )
+    }
 
     // Validation 2: prerequisite enforcement
     // A prerequisite is satisfied when the student has a grade row for it where
@@ -75,6 +85,21 @@ export class ReservationService {
     }
 
     return await reservationRepository.deleteById(reservationId)
+  }
+
+  async updateStatus(
+    reservationId: string,
+    status: Extract<ReservationStatus, "APPROVED" | "DENIED">,
+  ) {
+    const reservation = await reservationRepository.getById(reservationId)
+    if (!reservation) throw new Error("Reservation not found")
+    if (reservation.status === "CANCELLED") {
+      throw new Error("Cannot update a cancelled reservation")
+    }
+    if (reservation.status === status) {
+      throw new Error(`Reservation is already ${status}`)
+    }
+    return await reservationRepository.updateStatus(reservationId, status)
   }
 }
 
