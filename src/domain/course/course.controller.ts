@@ -5,6 +5,7 @@ import {
   createCourseSchema,
   updateCourseSchema,
   listCourseSchema,
+  addSubjectsToCourseSchema,
 } from "./course.schema"
 import { createResponse } from "../../shared/utils/response/response"
 import { HTTP_STATUS, resolveStatusCode } from "../../shared/utils/status-codes"
@@ -74,6 +75,33 @@ export class CourseController {
     }
   }
 
+  async handleGetById(c: Context) {
+    try {
+      const { id } = c.req.param()
+      const course = await courseService.getById(id)
+
+      const response = createResponse(
+        true,
+        "Course retrieved successfully.",
+        { course },
+        [],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response)
+    } catch (error: any) {
+      const response = createResponse(
+        false,
+        "Failed to retrieve course.",
+        null,
+        [error.message],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, resolveStatusCode(error))
+    }
+  }
+
   async handleUpdateById(c: Context) {
     try {
       const { id } = c.req.param()
@@ -94,6 +122,35 @@ export class CourseController {
       const response = createResponse(
         false,
         "Course update failed.",
+        null,
+        [error.message],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, resolveStatusCode(error))
+    }
+  }
+
+  async handleAddSubjects(c: Context) {
+    try {
+      const { id } = c.req.param()
+      const body = await c.req.json()
+      const validatedData = addSubjectsToCourseSchema.parse(body)
+      const subjects = await courseService.addSubjects(id, validatedData)
+
+      const response = createResponse(
+        true,
+        `${subjects.length} subject(s) added to course successfully.`,
+        { subjects },
+        [],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, HTTP_STATUS.CREATED)
+    } catch (error: any) {
+      const response = createResponse(
+        false,
+        "Failed to add subjects to course.",
         null,
         [error.message],
         null,

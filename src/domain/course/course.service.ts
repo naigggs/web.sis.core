@@ -3,6 +3,7 @@ import type {
   CreateCourseDTO,
   UpdateCourseDTO,
   ListCourseDTO,
+  AddSubjectsToCourseDTO,
 } from "./course.dto"
 
 export class CourseService {
@@ -47,6 +48,14 @@ export class CourseService {
       throw new Error("No IDs provided")
     }
     return await courseRepository.deleteManyByIds(ids)
+  }
+
+  async addSubjects(id: string, data: AddSubjectsToCourseDTO) {
+    const existing = await courseRepository.getById(id)
+    if (!existing) {
+      throw new Error("Course not found")
+    }
+    return await courseRepository.addSubjects(id, data.subjects)
   }
 }
 

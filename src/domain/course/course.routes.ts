@@ -11,8 +11,14 @@ courseRoutes.use("*", authMiddleware)
 courseRoutes.get("/", checkRole(["admin", "staff"]), (c) =>
   courseController.handleGetAll(c),
 )
+courseRoutes.get("/:id", checkRole(["admin", "staff"]), (c) =>
+  courseController.handleGetById(c),
+)
 courseRoutes.post("/", checkRole(["admin"]), (c) =>
   courseController.handleCreate(c),
+)
+courseRoutes.post("/:id/subjects", checkRole(["admin"]), (c) =>
+  courseController.handleAddSubjects(c),
 )
 courseRoutes.patch("/:id", checkRole(["admin"]), (c) =>
   courseController.handleUpdateById(c),

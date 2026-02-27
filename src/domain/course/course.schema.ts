@@ -17,3 +17,16 @@ export const listCourseSchema = z.object({
   limit: z.coerce.number().int().positive().default(10),
   search: z.string().optional(),
 })
+
+export const addSubjectsToCourseSchema = z.object({
+  subjects: z
+    .array(
+      z.object({
+        code: z.string().min(1),
+        title: z.string().min(1),
+        units: z.number().int().positive(),
+        slotLimit: z.number().int().positive().optional(),
+      }),
+    )
+    .min(1, "At least one subject is required"),
+})

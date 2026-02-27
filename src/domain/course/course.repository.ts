@@ -2,10 +2,12 @@ import { eq, ilike, or, and, inArray, SQL } from "drizzle-orm"
 
 import { db } from "../../config/database"
 import { course } from "../../db/schema/course"
+import { subject } from "../../db/schema/subject"
 import type {
   CreateCourseDTO,
   UpdateCourseDTO,
   ListCourseDTO,
+  AddSubjectsToCourseDTO,
 } from "./course.dto"
 
 export class CourseRepository {
@@ -37,6 +39,7 @@ export class CourseRepository {
   async getById(id: string) {
     return await db.query.course.findFirst({
       where: eq(course.id, id),
+      with: { subjects: true },
     })
   }
 
@@ -62,6 +65,14 @@ export class CourseRepository {
 
   async deleteManyByIds(ids: string[]) {
     return await db.delete(course).where(inArray(course.id, ids)).returning()
+  }
+
+  async addSubjects(
+    courseId: string,
+    subjects: AddSubjectsToCourseDTO["subjects"],
+  ) {
+    const rows = subjects.map((s) => ({ ...s, courseId }))
+    return await db.insert(subject).values(rows).returning()
   }
 }
 
