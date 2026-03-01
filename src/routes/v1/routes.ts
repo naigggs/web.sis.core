@@ -4,10 +4,12 @@ import { studentRoutes } from "../../domain/student/student.routes"
 import { courseRoutes } from "../../domain/course/course.routes"
 import { subjectRoutes } from "../../domain/subject/subject.routes"
 import { gradeRoutes } from "../../domain/grade/grade.routes"
+import { userRoutes } from "../../domain/user/user.routes"
 
 const v1Router = new Hono()
 
 v1Router.route("/auth", authRoutes)
+v1Router.route("/users", userRoutes)
 v1Router.route("/students", studentRoutes)
 v1Router.route("/courses", courseRoutes)
 v1Router.route("/subjects", subjectRoutes)
