@@ -1,8 +1,8 @@
-import { eq, inArray } from "drizzle-orm"
+import { eq, inArray, ilike, or, and, SQL } from "drizzle-orm"
 
 import { db } from "../../config/database"
 import { user } from "../../db/schema/user"
-import type { CreateUserParams, UpdateUserDTO } from "./user.dto"
+import type { CreateUserParams, UpdateUserDTO, ListUserDTO } from "./user.dto"
 
 export class UserRepository {
   async getByEmail(email: string) {
@@ -17,16 +17,35 @@ export class UserRepository {
     })
   }
 
-  async getAll(params: { page: number; limit: number }) {
-    const { page, limit } = params
+  async getAll(params: ListUserDTO) {
+    const { page, limit, search, role } = params
     const offset = (page - 1) * limit
+
+    const filters: SQL[] = []
+
+    if (search) {
+      filters.push(
+        or(
+          ilike(user.email, `%${search}%`),
+          ilike(user.id, `%${search}%`),
+          ilike(user.studentId, `%${search}%`),
+        ) as SQL,
+      )
+    }
+
+    if (role) {
+      filters.push(eq(user.role, role))
+    }
+
+    const where = filters.length > 0 ? and(...filters) : undefined
 
     const [users, total] = await Promise.all([
       db.query.user.findMany({
+        where,
         limit,
         offset,
       }),
-      db.$count(user),
+      db.$count(user, where),
     ])
 
     return { users, total }

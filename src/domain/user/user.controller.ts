@@ -1,7 +1,11 @@
 import type { Context } from "hono"
 
 import { userService } from "./user.service"
-import { createUserSchema, updateUserSchema } from "./user.schema"
+import {
+  createUserSchema,
+  updateUserSchema,
+  listUserSchema,
+} from "./user.schema"
 import { createResponse } from "../../shared/utils/response/response"
 import { HTTP_STATUS, resolveStatusCode } from "../../shared/utils/status-codes"
 
@@ -43,14 +47,13 @@ export class UserController {
 
   async handleGetAll(c: Context) {
     try {
-      const page = Number(c.req.query("page")) || 1
-      const limit = Number(c.req.query("limit")) || 10
+      const params = listUserSchema.parse(c.req.query())
 
-      const { users, total } = await userService.getAll({ page, limit })
+      const { users, total } = await userService.getAll(params)
 
-      const totalPages = Math.ceil(total / limit)
-      const hasNextPage = page < totalPages
-      const hasPrevPage = page > 1
+      const totalPages = Math.ceil(total / params.limit)
+      const hasNextPage = params.page < totalPages
+      const hasPrevPage = params.page > 1
 
       const formattedUsers = users.map((user) => {
         const { password, ...userData } = user
@@ -58,8 +61,8 @@ export class UserController {
       })
 
       const pagination = {
-        page,
-        limit,
+        page: params.page,
+        limit: params.limit,
         totalItems: total,
         totalPages,
         hasNextPage,

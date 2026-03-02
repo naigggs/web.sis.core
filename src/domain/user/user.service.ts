@@ -1,5 +1,5 @@
 import { userRepository } from "./user.repository"
-import type { CreateUserDTO, UpdateUserDTO } from "./user.dto"
+import type { CreateUserDTO, UpdateUserDTO, ListUserDTO } from "./user.dto"
 
 export class UserService {
   async create(data: CreateUserDTO) {
@@ -17,7 +17,7 @@ export class UserService {
     })
   }
 
-  async getAll(params: { page: number; limit: number }) {
+  async getAll(params: ListUserDTO) {
     return await userRepository.getAll(params)
   }
 

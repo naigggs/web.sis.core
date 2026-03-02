@@ -22,3 +22,10 @@ export const updateUserSchema = z.object({
   isBlocked: z.boolean().optional(),
   isSuspended: z.boolean().optional(),
 })
+
+export const listUserSchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().default(10),
+  search: z.string().optional(),
+  role: z.enum(USER_ROLES).optional(),
+})
