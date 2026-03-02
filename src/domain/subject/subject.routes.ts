@@ -11,6 +11,9 @@ subjectRoutes.use("*", authMiddleware)
 subjectRoutes.get("/", checkRole(["admin", "staff"]), (c) =>
   subjectController.handleGetAll(c),
 )
+subjectRoutes.get("/:id", checkRole(["admin", "staff"]), (c) =>
+  subjectController.handleGetById(c),
+)
 subjectRoutes.post("/", checkRole(["admin"]), (c) =>
   subjectController.handleCreate(c),
 )

@@ -46,6 +46,33 @@ export class SubjectController {
     }
   }
 
+  async handleGetById(c: Context) {
+    try {
+      const { id } = c.req.param()
+      const subject = await subjectService.getById(id)
+
+      const response = createResponse(
+        true,
+        "Subject retrieved successfully.",
+        { subject },
+        [],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response)
+    } catch (error: any) {
+      const response = createResponse(
+        false,
+        "Failed to retrieve subject.",
+        null,
+        [error.message],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, resolveStatusCode(error))
+    }
+  }
+
   async handleCreate(c: Context) {
     try {
       const body = await c.req.json()
