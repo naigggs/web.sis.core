@@ -12,7 +12,23 @@ import { HTTP_STATUS, resolveStatusCode } from "../../shared/utils/status-codes"
 export class SubjectController {
   async handleGetAll(c: Context) {
     try {
-      const params = listSubjectSchema.parse(c.req.query())
+      const query = c.req.query()
+      const multiCourseIds =
+        c.req.queries("courseId") ?? c.req.queries("courseId[]")
+
+      const params = listSubjectSchema.parse({
+        ...query,
+        // Supports faceted filters from common query formats:
+        // - ?courseId=a&courseId=b
+        // - ?courseId[]=a&courseId[]=b
+        // - ?courseId=a,b
+        // - ?course=a (legacy alias)
+        courseId:
+          multiCourseIds ??
+          query.courseId ??
+          query["courseId[]"] ??
+          query.course,
+      })
       const { subjects, total } = await subjectService.getAll(params)
 
       const totalPages = Math.ceil(total / params.limit)

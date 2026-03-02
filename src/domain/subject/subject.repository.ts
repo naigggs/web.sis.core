@@ -13,7 +13,7 @@ import type {
 
 export class SubjectRepository {
   async getAll(params: ListSubjectDTO) {
-    const { page, limit, search, courseId } = params
+    const { page, limit, search, courseId: courseIds } = params
     const offset = (page - 1) * limit
 
     const filters: SQL[] = []
@@ -27,8 +27,10 @@ export class SubjectRepository {
       )
     }
 
-    if (courseId) {
-      filters.push(eq(subject.courseId, courseId))
+    if (courseIds?.length === 1) {
+      filters.push(eq(subject.courseId, courseIds[0]))
+    } else if (courseIds && courseIds.length > 1) {
+      filters.push(inArray(subject.courseId, courseIds))
     }
 
     const where = filters.length > 0 ? and(...filters) : undefined
