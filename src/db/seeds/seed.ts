@@ -242,6 +242,7 @@ async function seedPrerequisites(subjects: { id: string; code: string }[]) {
   await db.insert(subjectPrerequisite).values(links).onConflictDoNothing()
 
   console.log(`   ✅ ${links.length} prerequisite links ready.`)
+  return links
 }
 
 // ─── 5. Students ──────────────────────────────────────────────────────────────
@@ -431,10 +432,11 @@ async function seedGrades(
 async function seedReservations(
   students: { id: string; courseId: string }[],
   subjects: { id: string; code: string; courseId: string }[],
+  prerequisiteLinks: { subjectId: string; prerequisiteSubjectId: string }[],
 ) {
   console.log("\n📝 Seeding reservations...")
 
-  // Reserve 2–3 subjects per student for first 15 students
+  // Reserve 2 subjects per student for first 15 students
   // (only non-prerequisite-gated subjects to keep it simple)
   const safeSubjectCodes = new Set([
     "CS101",
@@ -447,7 +449,36 @@ async function seedReservations(
     "BA102",
   ])
 
-  const reservations: { studentId: string; subjectId: string }[] = []
+  const prerequisiteSubjectIds = new Set(
+    prerequisiteLinks.map((link) => link.prerequisiteSubjectId),
+  )
+
+  const reservations: {
+    studentId: string
+    subjectId: string
+    status: "APPROVED" | "RESERVED"
+  }[] = []
+  const seen = new Set<string>()
+
+  // Seed APPROVED reservations for prerequisite subjects so prerequisite
+  // relationships are ready for testing and grade encoding flows.
+  for (const s of students.slice(0, 20)) {
+    const prereqSubjects = subjects.filter(
+      (sub) =>
+        sub.courseId === s.courseId && prerequisiteSubjectIds.has(sub.id),
+    )
+
+    for (const sub of prereqSubjects) {
+      const key = `${s.id}:${sub.id}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      reservations.push({
+        studentId: s.id,
+        subjectId: sub.id,
+        status: "APPROVED",
+      })
+    }
+  }
 
   for (const s of students.slice(0, 15)) {
     const eligible = subjects.filter(
@@ -455,7 +486,14 @@ async function seedReservations(
     )
 
     for (const sub of eligible.slice(0, 2)) {
-      reservations.push({ studentId: s.id, subjectId: sub.id })
+      const key = `${s.id}:${sub.id}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      reservations.push({
+        studentId: s.id,
+        subjectId: sub.id,
+        status: "RESERVED",
+      })
     }
   }
 
@@ -466,7 +504,16 @@ async function seedReservations(
       .onConflictDoNothing()
   }
 
-  console.log(`   ✅ ${reservations.length} reservations seeded.`)
+  const approvedCount = reservations.filter(
+    (r) => r.status === "APPROVED",
+  ).length
+  const reservedCount = reservations.filter(
+    (r) => r.status === "RESERVED",
+  ).length
+
+  console.log(
+    `   ✅ ${reservations.length} reservations seeded (${approvedCount} APPROVED, ${reservedCount} RESERVED).`,
+  )
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -477,10 +524,10 @@ async function main() {
   const admin = await seedAdmin()
   const courses = await seedCourses()
   const subjects = await seedSubjects(courses)
-  await seedPrerequisites(subjects)
+  const prerequisiteLinks = await seedPrerequisites(subjects)
   const students = await seedStudents(courses)
   await seedGrades(students, subjects, admin.id)
-  await seedReservations(students, subjects)
+  await seedReservations(students, subjects, prerequisiteLinks)
 
   console.log("\n✅ Seed complete!")
   console.log("\n📋 Admin Credentials:")
