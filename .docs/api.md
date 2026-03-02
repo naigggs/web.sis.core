@@ -1,409 +1,84 @@
 # API Reference
 
-Base URL: `http://localhost:3000/api/v1`
+Base URL: `/api/v1`
 
-All routes except `POST /auth/login` require a valid `accessToken` cookie (set automatically on login).
+## Feature Modules
 
-Role legend — **A** = admin, **S** = staff, **St** = student  
-`*` = required field, `?` = optional field
+| Module       | Base Path          | Documentation                                |
+| ------------ | ------------------ | -------------------------------------------- |
+| Auth         | `/api/v1/auth`     | [api/auth.md](api/auth.md)                   |
+| Users        | `/api/v1/users`    | [api/users.md](api/users.md)                 |
+| Courses      | `/api/v1/courses`  | [api/courses.md](api/courses.md)             |
+| Students     | `/api/v1/students` | [api/students.md](api/students.md)           |
+| Subjects     | `/api/v1/subjects` | [api/subjects.md](api/subjects.md)           |
+| Grades       | `/api/v1/grades`   | [api/grades.md](api/grades.md)               |
+| Reservations | (nested under students) | [api/reservations.md](api/reservations.md) |
 
----
+## Authentication
 
-## Auth
+All endpoints except `POST /auth/login` and `POST /auth/refresh` require a valid JWT access token.
 
-| Method | Route           | Roles | Description                                        |
-| ------ | --------------- | ----- | -------------------------------------------------- |
-| POST   | `/auth/login`   | —     | Login, sets `accessToken` + `refreshToken` cookies |
-| POST   | `/auth/logout`  | any   | Clears auth cookies                                |
-| POST   | `/auth/refresh` | —     | Rotates access token using refresh token           |
-| GET    | `/auth/me`      | any   | Returns the current authenticated user             |
+Tokens are set as **httpOnly cookies** (`accessToken`, `refreshToken`) by the login/refresh endpoints. The server reads the `accessToken` cookie on every request.
 
-### `POST /auth/login`
+## Role-Based Access Control
 
-```json
-{
-  "email": "admin@sis.edu", // * string (valid email)
-  "password": "Admin@1234" // * string (min 8 chars)
-}
-```
+Three roles exist: `student`, `staff`, `admin`. Each endpoint specifies which roles are allowed. Unauthorized access returns `403 Forbidden`.
 
----
+| Role    | Typical Access                                              |
+| ------- | ----------------------------------------------------------- |
+| admin   | Full CRUD on all resources, user management, hard delete    |
+| staff   | Read access, student/grade/reservation management           |
+| student | View own profile, own reservations, own eligible subjects   |
 
-## Users
+## Standard Response Envelope
 
-| Method | Route                    | Roles | Description        |
-| ------ | ------------------------ | ----- | ------------------ |
-| GET    | `/users`                 | A, S  | List all users     |
-| POST   | `/users`                 | A, S  | Create a user      |
-| GET    | `/users/:id`             | A, S  | Get user by ID     |
-| PATCH  | `/users/:id`             | A, S  | Update a user      |
-| DELETE | `/users/:id/soft-delete` | A, S  | Soft delete a user |
-| DELETE | `/users/:id/hard-delete` | A     | Hard delete a user |
-
-### `POST /users`
+Every response follows this structure:
 
 ```json
 {
-  "email": "staff@sis.edu", // * string (valid email)
-  "password": "Password1", // * string (min 8 chars)
-  "confirmPassword": "Password1", // * string (must match password)
-  "role": "staff" // ? "student" | "staff" | "admin" (default: "student")
-}
-```
-
-### `PATCH /users/:id`
-
-All fields are optional.
-
-```json
-{
-  "email": "new@sis.edu", // ? string (valid email)
-  "password": "NewPass1", // ? string (min 8 chars)
-  "role": "admin", // ? "student" | "staff" | "admin"
-  "isActive": true, // ? boolean
-  "isBlocked": false, // ? boolean
-  "isSuspended": false // ? boolean
-}
-```
-
----
-
-## Students
-
-| Method | Route                                       | Roles | Description                                                                    |
-| ------ | ------------------------------------------- | ----- | ------------------------------------------------------------------------------ |
-| GET    | `/students`                                 | A, S  | List students (search, filter by `courseId`, pagination)                       |
-| POST   | `/students`                                 | A, S  | Create a student (auto-creates a linked user account)                          |
-| GET    | `/students/:id`                             | A, S  | Full student profile (info, course, grades, reservations, subject eligibility) |
-| PATCH  | `/students/:id`                             | A, S  | Update a student                                                               |
-| DELETE | `/students`                                 | A     | Bulk delete students by IDs                                                    |
-| GET    | `/students/export`                          | A, S  | Download all students as a CSV file                                            |
-| POST   | `/students/import`                          | A, S  | Import students from a CSV file (multipart/form-data)                          |
-| GET    | `/students/me`                              | St    | Own full student profile                                                       |
-| GET    | `/students/me/reservations`                 | St    | Own reservations                                                               |
-| POST   | `/students/me/reservations`                 | St    | Reserve a subject (self)                                                       |
-| DELETE | `/students/me/reservations/:reservationId`  | St    | Cancel own reservation                                                         |
-| GET    | `/students/me/eligible-subjects`            | St    | Own eligible subjects                                                          |
-| GET    | `/students/:id/reservations`                | A, S  | List a student's reservations                                                  |
-| POST   | `/students/:id/reservations`                | A, S  | Reserve a subject for the student                                              |
-| PATCH  | `/students/:id/reservations/:reservationId` | A, S  | Approve or deny a reservation                                                  |
-| DELETE | `/students/:id/reservations/:reservationId` | A, S  | Cancel a reservation                                                           |
-| GET    | `/students/:id/eligible-subjects`           | A, S  | Returns subjects with eligibility flags                                        |
-
-### `GET /students` — Query Parameters
-
-| Parameter  | Type   | Description                                           |
-| ---------- | ------ | ----------------------------------------------------- |
-| `page`     | number | Page number (default: `1`)                            |
-| `limit`    | number | Items per page (default: `10`)                        |
-| `search`   | string | Search by first name, last name, student no, or email |
-| `courseId` | string | Filter by course UUID                                 |
-
-**Example:**
-
-```
-GET /students?courseId=<uuid>&search=juan&page=1&limit=10
-```
-
----
-
-### `POST /students/import`
-
-Upload a CSV file using `multipart/form-data` with the field name `file`.
-
-**CSV format** (first row must be this exact header):
-
-```csv
-studentNo,firstName,lastName,email,birthDate,courseId
-2024-00001,Juan,dela Cruz,juan@sis.edu,2000-01-15,<uuid>
-2024-00002,Maria,Santos,,,<uuid>
-```
-
-| Column      | Required | Description                                 |
-| ----------- | -------- | ------------------------------------------- |
-| `studentNo` | ✅       | Unique student number                       |
-| `firstName` | ✅       | First name                                  |
-| `lastName`  | ✅       | Last name                                   |
-| `email`     | ❌       | Email address                               |
-| `birthDate` | ❌       | ISO date (`YYYY-MM-DD`)                     |
-| `courseId`  | ✅       | UUID of the course to enroll the student in |
-
-**Response:**
-
-```json
-{
-  "data": {
-    "imported": 48,
-    "failed": [
-      {
-        "row": 3,
-        "studentNo": "2024-00003",
-        "error": "Student number already exists"
-      }
-    ]
+  "success": true,
+  "message": "Descriptive message.",
+  "data": {},
+  "errors": [],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalItems": 42,
+    "totalPages": 5,
+    "hasNextPage": true,
+    "hasPrevPage": false
+  },
+  "metadata": {
+    "requestId": "uuid",
+    "version": "1.0.0",
+    "timestamp": "2025-01-01T00:00:00.000Z",
+    "serverTime": "2025-01-01T00:00:00.000Z"
   }
 }
 ```
 
-### `GET /students/export`
+- `data` -- Contains the response payload (or `null` on error).
+- `errors` -- Array of error messages (empty on success).
+- `pagination` -- Present only on list endpoints, `null` otherwise.
+- `metadata` -- Always present. `requestId` echoes the `x-request-id` header if provided.
 
-Returns a `students.csv` file download — no request body needed.
+## HTTP Status Codes
 
----
+| Code | Usage                                |
+| ---- | ------------------------------------ |
+| 200  | Successful read/update/delete        |
+| 201  | Successful create                    |
+| 400  | Validation error or bad request      |
+| 401  | Missing/invalid/expired token        |
+| 403  | Insufficient role permissions        |
+| 404  | Resource not found                   |
+| 500  | Unexpected server error              |
 
-### `POST /students`
+## Pagination
 
-```json
-{
-  "studentNo": "2024-00001", // * string
-  "firstName": "Juan", // * string
-  "lastName": "dela Cruz", // * string
-  "email": "juan@sis.edu", // ? string (valid email)
-  "birthDate": "2000-01-15", // ? string (ISO date)
-  "courseId": "<uuid>" // * string (UUID of enrolled course)
-}
-```
+All list endpoints support pagination via query parameters:
 
-> A `users` account is automatically created for the student with `role = "student"`. The password is set to the student's `birthDate` (e.g. `2000-01-15`), or falls back to `studentNo` if no birthDate is provided. Students can log in immediately at `POST /auth/login` using their email and birthDate.
-
-### `PATCH /students/:id`
-
-All fields are optional.
-
-```json
-{
-  "studentNo": "2024-00001", // ? string
-  "firstName": "Juan", // ? string
-  "lastName": "dela Cruz", // ? string
-  "email": "juan@sis.edu", // ? string (valid email)
-  "birthDate": "2000-01-15", // ? string (ISO date)
-  "courseId": "<uuid>" // ? string (UUID of enrolled course)
-}
-```
-
-### `DELETE /students`
-
-```json
-{
-  "ids": ["<uuid>", "<uuid>", "<uuid>"] // * string[] (non-empty array of student UUIDs)
-}
-```
-
-### `POST /students/:id/reservations`
-
-```json
-{
-  "subjectId": "<uuid>" // * string (UUID of subject to reserve)
-}
-```
-
-> Subject must belong to the student's enrolled course. All prerequisites must be **passed** (remarks = `PASSED`) before reserving. Each subject has a slot limit (default **10**); reservations are rejected once the limit is reached.
-
-### `PATCH /students/:id/reservations/:reservationId`
-
-```json
-{
-  "status": "APPROVED" // * "APPROVED" | "DENIED"
-}
-```
-
-> Only admin and staff can approve or deny reservations. A cancelled reservation cannot be updated. Reservation statuses: `RESERVED` → `APPROVED` | `DENIED` | `CANCELLED`.
-
----
-
-## Courses
-
-| Method | Route          | Roles | Description                |
-| ------ | -------------- | ----- | -------------------------- |
-| GET    | `/courses`     | A, S  | List all courses           |
-| POST   | `/courses`     | A     | Create a course            |
-| PATCH  | `/courses/:id` | A     | Update a course            |
-| DELETE | `/courses`     | A     | Bulk delete courses by IDs |
-
-### `POST /courses`
-
-```json
-{
-  "code": "BSCS", // * string
-  "name": "Bachelor of Science in Computer Science", // * string
-  "description": "4-year CS program" // ? string
-}
-```
-
-### `PATCH /courses/:id`
-
-All fields are optional.
-
-```json
-{
-  "code": "BSCS", // ? string
-  "name": "BS Computer Science", // ? string
-  "description": "Updated desc" // ? string
-}
-```
-
-### `DELETE /courses`
-
-```json
-{
-  "ids": ["<uuid>", "<uuid>"] // * string[] (non-empty array of course UUIDs)
-}
-```
-
----
-
-## Subjects
-
-| Method | Route                                                | Roles | Description                                              |
-| ------ | ---------------------------------------------------- | ----- | -------------------------------------------------------- |
-| GET    | `/subjects`                                          | A, S  | List subjects (search, filter by `courseId`, pagination) |
-| POST   | `/subjects`                                          | A     | Create a subject                                         |
-| PATCH  | `/subjects/:id`                                      | A     | Update a subject                                         |
-| DELETE | `/subjects`                                          | A     | Bulk delete subjects by IDs                              |
-| GET    | `/subjects/:id/enrolled-students`                    | A, S  | Students with an approved reservation (grading sheet)    |
-| GET    | `/subjects/:id/prerequisites`                        | A, S  | List prerequisites for a subject                         |
-| POST   | `/subjects/:id/prerequisites`                        | A     | Add a prerequisite to a subject                          |
-| DELETE | `/subjects/:id/prerequisites/:prerequisiteSubjectId` | A     | Remove a prerequisite                                    |
-
-### `POST /subjects`
-
-```json
-{
-  "code": "CS101", // * string
-  "title": "Introduction to Programming", // * string
-  "units": 3, // * integer (positive)
-  "courseId": "<uuid>", // * string (UUID of owning course)
-  "slotLimit": 10 // ? integer (max reservations, default: 10)
-}
-```
-
-### `PATCH /subjects/:id`
-
-All fields are optional.
-
-```json
-{
-  "code": "CS101", // ? string
-  "title": "Intro to Programming", // ? string
-  "units": 3, // ? integer (positive)
-  "courseId": "<uuid>", // ? string (UUID of owning course)
-  "slotLimit": 20 // ? integer (max reservations)
-}
-```
-
-### `DELETE /subjects`
-
-```json
-{
-  "ids": ["<uuid>", "<uuid>"] // * string[] (non-empty array of subject UUIDs)
-}
-```
-
-### `POST /subjects/:id/prerequisites`
-
-```json
-{
-  "prerequisiteSubjectId": "<uuid>" // * string (UUID of prerequisite subject)
-}
-```
-
-> Prerequisites must belong to the same course. Self-referencing and circular chains are rejected.
-
-### `GET /subjects/:id/enrolled-students`
-
-Returns all students with an `APPROVED` reservation for the given subject, each merged with their current grade record for that subject. Intended for the grading sheet UI.
-
-**Response shape per student:**
-
-```json
-{
-  "id": "<uuid>",
-  "studentNo": "2026-00001",
-  "firstName": "James",
-  "lastName": "Santos",
-  "email": "james.santos1@student.edu",
-  "birthDate": "2000-01-01",
-  "course": { "id": "<uuid>", "code": "BSIT", "name": "..." },
-  "grade": {
-    "id": "<uuid>",
-    "prelim": "82.00",
-    "midterm": "85.00",
-    "finals": "88.00",
-    "finalGrade": "85.00",
-    "remarks": "PASSED"
-  }
-}
-```
-
-> `grade` is `null` if the student has not yet been graded for this subject.
-
-**Typical grading sheet flow:**
-
-1. `GET /courses` → populate Course dropdown
-2. `GET /subjects?courseId=<uuid>` → populate Subject dropdown
-3. `GET /subjects/:id/enrolled-students` → load grading sheet rows
-
----
-
-## Student Self-Service (`/students/me`)
-
-These routes require a `student`-role JWT. The student ID is taken from the token — no ID parameter is needed.
-
-| Method | Route                                      | Description                             |
-| ------ | ------------------------------------------ | --------------------------------------- |
-| GET    | `/students/me`                             | Own full profile (grades, reservations) |
-| GET    | `/students/me/eligible-subjects`           | Subjects eligible for reservation       |
-| GET    | `/students/me/reservations`                | Own reservation list                    |
-| POST   | `/students/me/reservations`                | Reserve a subject                       |
-| DELETE | `/students/me/reservations/:reservationId` | Cancel own reservation                  |
-
-### `POST /students/me/reservations`
-
-```json
-{
-  "subjectId": "<uuid>" // * string (UUID of subject to reserve)
-}
-```
-
-> Same validation rules as the admin-side reserve: course match, prerequisites passed, slot limit enforced.
-
----
-
-## Grades
-
-| Method | Route         | Roles | Description                                                  |
-| ------ | ------------- | ----- | ------------------------------------------------------------ |
-| GET    | `/grades`     | A, S  | List grades (filter by `courseId`, `subjectId`, `studentId`) |
-| POST   | `/grades`     | A, S  | Upsert a grade record                                        |
-| PATCH  | `/grades/:id` | A, S  | Update a grade record                                        |
-
-### `POST /grades`
-
-```json
-{
-  "studentId": "<uuid>", // * string (UUID of student)
-  "subjectId": "<uuid>", // * string (UUID of subject)
-  "courseId": "<uuid>", // * string (UUID of course)
-  "prelim": 85.5, // ? number (0–100)
-  "midterm": 90.0, // ? number (0–100)
-  "finals": 88.0 // ? number (0–100)
-}
-```
-
-> The student must have an **`APPROVED`** reservation for the subject before a grade can be created. Use `GET /subjects/:id/enrolled-students` to get the list of gradable students.
-
-### `PATCH /grades/:id`
-
-All fields are optional.
-
-```json
-{
-  "prelim": 85.5, // ? number (0–100)
-  "midterm": 90.0, // ? number (0–100)
-  "finals": 88.0 // ? number (0–100)
-}
-```
-
-> `finalGrade` and `remarks` are **computed automatically** — do not send them as input.  
-> Formula: `finalGrade = (prelim × 0.30) + (midterm × 0.30) + (finals × 0.40)`  
-> `remarks` = `"PASSED"` if `finalGrade ≥ 75`, otherwise `"FAILED"`. Computed only when all three components are present.
+| Parameter | Type   | Default | Description    |
+| --------- | ------ | ------- | -------------- |
+| `page`    | number | `1`     | Page number    |
+| `limit`   | number | `10`    | Items per page |

@@ -1,10 +1,55 @@
 # Business Rules
 
+## Student Accounts
+
+- When a student is created, a linked **user account** is automatically created with `role: "student"`.
+- Default password is the student's `birthDate` (e.g. `2000-01-01`). Falls back to `studentNo` if no birth date.
+- The user record stores a `studentId` foreign key linking it to the student profile.
+
+## Subjects & Prerequisites
+
+### Subject Uniqueness
+
+- Subject `code` is unique **within a course** (not globally).
+- Subject `title` is unique **within a course**.
+
+### Prerequisite Rules
+
+1. A subject **cannot be its own prerequisite**.
+2. Both the subject and prerequisite must belong to the **same course**.
+3. **Circular dependencies are prevented** -- the system runs a BFS traversal before adding a link to detect cycles.
+4. Duplicate prerequisite links are rejected.
+
+## Subject Reservations
+
+### Reservation Flow
+
+```
+Student reserves subject -> status: RESERVED
+    |
+    +-- Admin/Staff approves -> status: APPROVED (student enrolled)
+    +-- Admin/Staff denies   -> status: DENIED
+    +-- Student cancels      -> reservation deleted
+```
+
+### Reservation Validation
+
+Before a student can reserve a subject:
+
+1. **Course match** -- The subject must belong to the student's enrolled course.
+2. **No duplicate** -- The student cannot reserve the same subject twice.
+3. **Slot limit** -- Active reservations (RESERVED + APPROVED) must not exceed the subject's `slotLimit`.
+4. **Prerequisite check** -- All prerequisite subjects must have a passing grade (finalGrade >= 75 or remarks = PASSED).
+
+### Status Update Rules
+
+- CANCELLED reservations cannot be updated.
+- A reservation cannot be set to its current status.
+- Approval additionally checks the slot limit (only counts APPROVED reservations).
+
 ## Grading
 
-### Final Grade Calculation
-
-`finalGrade` and `remarks` are **always computed by the server** and cannot be supplied by the client.
+### Grade Components
 
 | Component | Weight |
 | --------- | ------ |
@@ -12,55 +57,56 @@
 | Midterm   | 30%    |
 | Finals    | 40%    |
 
+### Auto-computation
+
+When all three components (prelim, midterm, finals) are provided:
+
 ```
-finalGrade = (prelim × 0.30) + (midterm × 0.30) + (finals × 0.40)
+finalGrade = round(prelim * 0.3 + midterm * 0.3 + finals * 0.4, 2)
+remarks    = finalGrade >= 75 ? "PASSED" : "FAILED"
 ```
 
-`finalGrade` and `remarks` are only written when **all three** components (`prelim`, `midterm`, `finals`) are present. Partial updates that leave any component missing will not overwrite an existing final grade.
+If any component is missing, `finalGrade` and `remarks` remain `null`.
 
-### Remarks
+### Grade Encoding Rules
 
-| Condition          | Remarks  |
-| ------------------ | -------- |
-| `finalGrade >= 75` | `PASSED` |
-| `finalGrade < 75`  | `FAILED` |
+1. The student must have an **APPROVED** reservation for the subject before a grade can be encoded.
+2. Grades use **upsert** (insert-or-update) on the composite key `(studentId, subjectId, courseId)`.
+3. The `encodedByUserId` tracks which staff/admin encoded the grade.
+4. Grade values are clamped to `0-100`.
 
----
+## Eligible Subjects
 
-## Prerequisites
+The "eligible subjects" endpoint computes which subjects a student can reserve:
 
-### Satisfaction Rule
+For each subject in the student's course:
+- **eligible** = all prerequisite subjects have a PASSED grade.
+- **alreadyReserved** = the student has an existing reservation.
+- **missingPrerequisites** = list of prerequisite subjects not yet passed.
 
-A prerequisite subject is considered **satisfied (passed)** when the student has a grade record for that subject where **either**:
+## CSV Import/Export (Students)
 
-- `final_grade >= 75`, **or**
-- `remarks = 'PASSED'` (case-insensitive)
+### Export
 
-### Integrity Rules
+`GET /students/export` returns a CSV file with columns: `studentNo, firstName, lastName, email, birthDate, courseId`.
 
-| Rule                                             | Enforcement                        |
-| ------------------------------------------------ | ---------------------------------- |
-| A subject cannot be its own prerequisite         | Application logic (service layer)  |
-| Prerequisites must belong to the same course     | Application logic (service layer)  |
-| Circular prerequisites are prevented (A → B → A) | BFS traversal in application logic |
+### Import
 
----
+`POST /students/import` accepts a multipart form field named `file` with a CSV matching the same header format. Each row is validated individually:
 
-## Subject Reservation
+- If `studentNo`, `firstName`, `lastName`, or `courseId` is empty -- row skipped.
+- If `studentNo` or `email` already exists -- row skipped.
+- Successfully imported students get auto-created user accounts.
 
-### Validation on Reserve
+The response includes `imported` count and a `failed` array with row number, studentNo, and error message.
 
-When a student reserves a subject, the system checks **in order**:
+## Deletion Cascading
 
-1. **Subject belongs to student's course** — `subject.course_id == student.course_id`  
-   Error: `400 Subject does not belong to the student's enrolled course`
+When students are bulk-deleted:
 
-2. **Not already reserved** — unique `(student_id, subject_id)`  
-   Error: `400 Subject already reserved`
+1. Related **grades** are deleted first.
+2. Related **reservations** are deleted.
+3. Related **user accounts** (by `studentId`) are deleted.
+4. Finally, the **student** records are deleted.
 
-3. **All prerequisites satisfied** — each prerequisite must have `final_grade >= 75` or `remarks = 'PASSED'`  
-   Error:
-   ```
-   400 Missing prerequisites: [CS101, CS102]
-   ```
-   The error lists subject **codes** (not IDs) for readability.
+This explicit cascade order satisfies foreign key constraints.
