@@ -7,6 +7,10 @@
  *   Email:    admin@sis.edu
  *   Password: Admin@1234
  *
+ * Seeded Staff Credentials:
+ *   Email:    staff@sis.edu
+ *   Password: Staff@1234
+ *
  * Run: bun run db:seed
  * =============================================================================
  */
@@ -23,6 +27,8 @@ import { eq } from "drizzle-orm"
 
 const ADMIN_EMAIL = "admin@sis.edu"
 const ADMIN_PASSWORD = "Admin@1234"
+const STAFF_EMAIL = "staff@sis.edu"
+const STAFF_PASSWORD = "Staff@1234"
 
 // ─── 1. Admin User ────────────────────────────────────────────────────────────
 
@@ -46,6 +52,28 @@ async function seedAdmin() {
 
   console.log(`   ✅ Admin created: ${admin.email}`)
   return admin
+}
+
+async function seedStaff() {
+  console.log("\n👩‍💼 Seeding staff user...")
+
+  const existing = await db.query.user.findFirst({
+    where: eq(user.email, STAFF_EMAIL),
+  })
+
+  if (existing) {
+    console.log("   Staff already exists, skipping.")
+    return existing
+  }
+
+  const hashedPassword = await Bun.password.hash(STAFF_PASSWORD)
+  const [staff] = await db
+    .insert(user)
+    .values({ email: STAFF_EMAIL, password: hashedPassword, role: "staff" })
+    .returning()
+
+  console.log(`   ✅ Staff created: ${staff.email}`)
+  return staff
 }
 
 // ─── 2. Courses ───────────────────────────────────────────────────────────────
@@ -522,6 +550,7 @@ async function main() {
   console.log("🌱 Starting full system seed...")
 
   const admin = await seedAdmin()
+  await seedStaff()
   const courses = await seedCourses()
   const subjects = await seedSubjects(courses)
   const prerequisiteLinks = await seedPrerequisites(subjects)
@@ -533,6 +562,9 @@ async function main() {
   console.log("\n📋 Admin Credentials:")
   console.log("   Email:    admin@sis.edu")
   console.log("   Password: Admin@1234")
+  console.log("\n📋 Staff Credentials:")
+  console.log("   Email:    staff@sis.edu")
+  console.log("   Password: Staff@1234")
   console.log("\n📋 Student Login:")
   console.log("   Email:    <student email>")
   console.log("   Password: <student birthDate, e.g. 2000-01-01>")
