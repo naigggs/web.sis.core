@@ -5,12 +5,14 @@ import { course } from "./course"
 import { student } from "./student"
 import { subject } from "./subject"
 import { grade } from "./grade"
+import { gradeAuditLog } from "./grade-audit-log"
 import { subjectReservation } from "./subject-reservation"
 import { subjectPrerequisite } from "./subject-prerequisite"
 
 // ─── User Relations ───────────────────────────────────────────────────────────
 export const userRelations = relations(user, ({ one, many }) => ({
   encodedGrades: many(grade),
+  gradeAuditLogs: many(gradeAuditLog),
   student: one(student, {
     fields: [user.studentId],
     references: [student.id],
@@ -70,6 +72,17 @@ export const gradeRelations = relations(grade, ({ one }) => ({
   }),
   encodedBy: one(user, {
     fields: [grade.encodedByUserId],
+    references: [user.id],
+  }),
+}))
+
+export const gradeAuditLogRelations = relations(gradeAuditLog, ({ one }) => ({
+  grade: one(grade, {
+    fields: [gradeAuditLog.gradeId],
+    references: [grade.id],
+  }),
+  performedBy: one(user, {
+    fields: [gradeAuditLog.performedByUserId],
     references: [user.id],
   }),
 }))

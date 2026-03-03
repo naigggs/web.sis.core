@@ -24,3 +24,9 @@ export const listGradeSchema = z.object({
   subjectId: z.string().optional(),
   studentId: z.string().optional(),
 })
+
+export const gradeHistorySchema = z.object({
+  studentId: z.string().min(1),
+  subjectId: z.string().min(1),
+  courseId: z.string().min(1),
+})

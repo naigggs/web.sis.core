@@ -11,6 +11,9 @@ gradeRoutes.use("*", authMiddleware)
 gradeRoutes.get("/", checkRole(["admin", "staff"]), (c) =>
   gradeController.handleGetAll(c),
 )
+gradeRoutes.get("/history", checkRole(["admin", "staff"]), (c) =>
+  gradeController.handleGetHistory(c),
+)
 gradeRoutes.post("/", checkRole(["admin", "staff"]), (c) =>
   gradeController.handleUpsert(c),
 )

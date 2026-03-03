@@ -1,6 +1,7 @@
 CREATE TYPE "public"."user_role" AS ENUM('student', 'staff', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."subject_reservation_status" AS ENUM('RESERVED', 'CANCELLED', 'APPROVED', 'DENIED');--> statement-breakpoint
 CREATE TYPE "public"."grade_remarks" AS ENUM('PASSED', 'FAILED');--> statement-breakpoint
+CREATE TYPE "public"."grade_audit_action" AS ENUM('CREATED', 'UPDATED');--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" text PRIMARY KEY NOT NULL,
 	"email" text,
@@ -68,6 +69,19 @@ CREATE TABLE "grades" (
 	CONSTRAINT "grades_student_id_subject_id_course_id_unique" UNIQUE("student_id","subject_id","course_id")
 );
 --> statement-breakpoint
+CREATE TABLE "grade_audit_logs" (
+	"id" text PRIMARY KEY NOT NULL,
+	"grade_id" text NOT NULL,
+	"action" "grade_audit_action" NOT NULL,
+	"prelim" numeric(5, 2),
+	"midterm" numeric(5, 2),
+	"finals" numeric(5, 2),
+	"final_grade" numeric(5, 2),
+	"remarks" "grade_remarks",
+	"performed_by_user_id" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "subject_reservations" (
 	"id" text PRIMARY KEY NOT NULL,
 	"status" "subject_reservation_status" DEFAULT 'RESERVED' NOT NULL,
@@ -92,6 +106,8 @@ ALTER TABLE "grades" ADD CONSTRAINT "grades_student_id_students_id_fk" FOREIGN K
 ALTER TABLE "grades" ADD CONSTRAINT "grades_subject_id_subjects_id_fk" FOREIGN KEY ("subject_id") REFERENCES "public"."subjects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "grades" ADD CONSTRAINT "grades_course_id_courses_id_fk" FOREIGN KEY ("course_id") REFERENCES "public"."courses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "grades" ADD CONSTRAINT "grades_encoded_by_user_id_users_id_fk" FOREIGN KEY ("encoded_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "grade_audit_logs" ADD CONSTRAINT "grade_audit_logs_grade_id_grades_id_fk" FOREIGN KEY ("grade_id") REFERENCES "public"."grades"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "grade_audit_logs" ADD CONSTRAINT "grade_audit_logs_performed_by_user_id_users_id_fk" FOREIGN KEY ("performed_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subject_reservations" ADD CONSTRAINT "subject_reservations_student_id_students_id_fk" FOREIGN KEY ("student_id") REFERENCES "public"."students"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subject_reservations" ADD CONSTRAINT "subject_reservations_subject_id_subjects_id_fk" FOREIGN KEY ("subject_id") REFERENCES "public"."subjects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subject_prerequisites" ADD CONSTRAINT "subject_prerequisites_subject_id_subjects_id_fk" FOREIGN KEY ("subject_id") REFERENCES "public"."subjects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

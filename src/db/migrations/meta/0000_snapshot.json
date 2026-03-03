@@ -1,5 +1,5 @@
 {
-  "id": "c5ac60cc-1edb-4ec1-babb-553e1d19dede",
+  "id": "36c22f29-0ff6-4e98-8803-597d9b9ece11",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -509,6 +509,109 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.grade_audit_logs": {
+      "name": "grade_audit_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "grade_id": {
+          "name": "grade_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action": {
+          "name": "action",
+          "type": "grade_audit_action",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "prelim": {
+          "name": "prelim",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "midterm": {
+          "name": "midterm",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finals": {
+          "name": "finals",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "final_grade": {
+          "name": "final_grade",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "grade_remarks",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "performed_by_user_id": {
+          "name": "performed_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "grade_audit_logs_grade_id_grades_id_fk": {
+          "name": "grade_audit_logs_grade_id_grades_id_fk",
+          "tableFrom": "grade_audit_logs",
+          "tableTo": "grades",
+          "columnsFrom": [
+            "grade_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "grade_audit_logs_performed_by_user_id_users_id_fk": {
+          "name": "grade_audit_logs_performed_by_user_id_users_id_fk",
+          "tableFrom": "grade_audit_logs",
+          "tableTo": "users",
+          "columnsFrom": [
+            "performed_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.subject_reservations": {
       "name": "subject_reservations",
       "schema": "",
@@ -692,6 +795,14 @@
       "values": [
         "PASSED",
         "FAILED"
+      ]
+    },
+    "public.grade_audit_action": {
+      "name": "grade_audit_action",
+      "schema": "public",
+      "values": [
+        "CREATED",
+        "UPDATED"
       ]
     }
   },

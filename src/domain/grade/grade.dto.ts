@@ -4,8 +4,10 @@ import {
   createGradeSchema,
   updateGradeSchema,
   listGradeSchema,
+  gradeHistorySchema,
 } from "./grade.schema"
 
 export type CreateGradeDTO = z.infer<typeof createGradeSchema>
 export type UpdateGradeDTO = z.infer<typeof updateGradeSchema>
 export type ListGradeDTO = z.infer<typeof listGradeSchema>
+export type GradeHistoryDTO = z.infer<typeof gradeHistorySchema>

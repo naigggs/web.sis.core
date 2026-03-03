@@ -3,7 +3,13 @@ import { studentRepository } from "../student/student.repository"
 import { subjectRepository } from "../subject/subject.repository"
 import { courseRepository } from "../course/course.repository"
 import { reservationRepository } from "../reservation/reservation.repository"
-import type { CreateGradeDTO, UpdateGradeDTO, ListGradeDTO } from "./grade.dto"
+import { gradeAuditRepository } from "./grade-audit.repository"
+import type {
+  CreateGradeDTO,
+  UpdateGradeDTO,
+  ListGradeDTO,
+  GradeHistoryDTO,
+} from "./grade.dto"
 
 function computeGrade(
   prelim?: number,
@@ -22,6 +28,17 @@ function computeGrade(
 export class GradeService {
   async getAll(params: ListGradeDTO) {
     return await gradeRepository.getAll(params)
+  }
+
+  async getHistory(params: GradeHistoryDTO) {
+    const existing = await gradeRepository.getByComposite(
+      params.studentId,
+      params.subjectId,
+      params.courseId,
+    )
+    if (!existing) throw new Error("Grade not found")
+
+    return await gradeAuditRepository.getByGradeId(existing.id)
   }
 
   async upsert(data: CreateGradeDTO, encodedByUserId: string) {
@@ -46,13 +63,32 @@ export class GradeService {
       )
     }
 
+    const existing = await gradeRepository.getByComposite(
+      data.studentId,
+      data.subjectId,
+      data.courseId,
+    )
+
     const computed = computeGrade(data.prelim, data.midterm, data.finals)
-    return await gradeRepository.upsert({
+    const saved = await gradeRepository.upsert({
       ...data,
       encodedByUserId,
       finalGrade: computed?.finalGrade,
       remarks: computed?.remarks,
     })
+
+    await gradeAuditRepository.create({
+      gradeId: saved.id,
+      action: existing ? "UPDATED" : "CREATED",
+      prelim: saved.prelim,
+      midterm: saved.midterm,
+      finals: saved.finals,
+      finalGrade: saved.finalGrade,
+      remarks: saved.remarks,
+      performedByUserId: encodedByUserId,
+    })
+
+    return saved
   }
 
   async updateById(id: string, data: UpdateGradeDTO, encodedByUserId: string) {
@@ -71,12 +107,25 @@ export class GradeService {
       (existing.finals !== null ? Number(existing.finals) : undefined)
 
     const computed = computeGrade(prelim, midterm, finals)
-    return await gradeRepository.updateById(id, {
+    const updated = await gradeRepository.updateById(id, {
       ...data,
       encodedByUserId,
       finalGrade: computed?.finalGrade,
       remarks: computed?.remarks,
     })
+
+    await gradeAuditRepository.create({
+      gradeId: updated.id,
+      action: "UPDATED",
+      prelim: updated.prelim,
+      midterm: updated.midterm,
+      finals: updated.finals,
+      finalGrade: updated.finalGrade,
+      remarks: updated.remarks,
+      performedByUserId: encodedByUserId,
+    })
+
+    return updated
   }
 }
 

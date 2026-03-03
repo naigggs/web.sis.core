@@ -5,6 +5,7 @@ import {
   createGradeSchema,
   updateGradeSchema,
   listGradeSchema,
+  gradeHistorySchema,
 } from "./grade.schema"
 import { createResponse } from "../../shared/utils/response/response"
 import { HTTP_STATUS, resolveStatusCode } from "../../shared/utils/status-codes"
@@ -102,6 +103,33 @@ export class GradeController {
       const response = createResponse(
         false,
         "Failed to update grade.",
+        null,
+        [error.message],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response, resolveStatusCode(error))
+    }
+  }
+
+  async handleGetHistory(c: Context) {
+    try {
+      const params = gradeHistorySchema.parse(c.req.query())
+      const history = await gradeService.getHistory(params)
+
+      const response = createResponse(
+        true,
+        "Grade history retrieved successfully.",
+        { history },
+        [],
+        null,
+        c.req.header("x-request-id"),
+      )
+      return c.json(response)
+    } catch (error: any) {
+      const response = createResponse(
+        false,
+        "Failed to retrieve grade history.",
         null,
         [error.message],
         null,
